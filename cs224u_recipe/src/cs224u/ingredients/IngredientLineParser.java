@@ -4,15 +4,17 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.StringTokenizer;
 
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.stanford.nlp.trees.GrammaticalStructure;
 import edu.stanford.nlp.trees.GrammaticalStructureFactory;
 import edu.stanford.nlp.trees.PennTreebankLanguagePack;
+import edu.stanford.nlp.trees.PennTreebankTokenizer;
 import edu.stanford.nlp.trees.Tree;
+import edu.stanford.nlp.trees.TreeGraphNode;
 import edu.stanford.nlp.trees.TreePrint;
 import edu.stanford.nlp.trees.TreebankLanguagePack;
 import edu.stanford.nlp.trees.TypedDependency;
@@ -35,54 +37,67 @@ public class IngredientLineParser {
 		//		TokenizerFactory<CoreLabel> tokenizerFactory = PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
 	}
 
+	/*
+	 * Parses an ingredient line by first running it through the Stanford dependency parser to determine
+	 * which quantities fit with which units. Then it joins the quantity with the associated units and
+	 * re-parses the ingredient line.
+	 */
 	public String parseLine(String line){
 
 		String qty = "";
 		String units = "";
 		String ingredient = "";
 
-
 		Tree parseTree = lexParser.apply(line);
-		//parseTree.pennPrint();
+		
+		/* Boilerplate for getting typed dependencies */
 		TreebankLanguagePack tlp = new PennTreebankLanguagePack();
 		GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
 		TreePrint tp = new TreePrint("typedDependenciesCollapsed");
 		GrammaticalStructure gs = gsf.newGrammaticalStructure(parseTree);
-		System.out.println(gs.typedDependenciesCollapsed());
-		ArrayList<TypedDependency> deps = (ArrayList<TypedDependency>) gs.typedDependenciesCollapsed();
-		HashSet<Integer> indicesToSkip = new HashSet<Integer>();
+		//System.out.println(gs.typedDependenciesCollapsed());
 		
+		ArrayList<TypedDependency> deps = (ArrayList<TypedDependency>) gs.typedDependenciesCollapsed();
+		
+		HashSet<Integer> indicesToSkip = new HashSet<Integer>(); // Skip these indicies when recreating sentence
+		
+		String qtyAndUnits = "";
 		
 		for (TypedDependency dep : deps) {
-			if (dep.reln().toString().equals("num")) {
-				indicesToSkip.add(dep.dep().index());
-				indicesToSkip.add(dep.gov().index());
-				System.out.println(dep.dep().label().word());
-				System.out.println(dep.gov().label().word());
-			}
+			String relation = dep.reln().toString();
+			TreeGraphNode dependent = dep.dep();
+			TreeGraphNode governor = dep.gov();
+			String depStr = dependent.label().word();
+			String govStr = governor.label().word();
 			
-			if (dep.reln().toString().equals("number")) {
-				System.out.println(dep.dep().label().word());
-				System.out.println(dep.gov().label().word());
-			}
-				
+			if (govStr.matches(measurementRegex) && (relation.equals("num") || relation.equals("number"))) {
+				indicesToSkip.add(dependent.index());
+				indicesToSkip.add(governor.index());
+				qtyAndUnits += depStr + "_" + govStr + " ";
+			}		
 		}
+		
+		//System.out.println(indicesToSkip.toString());
+		
 		System.out.println();
-		tp.printTree(parseTree);
+		//tp.printTree(parseTree); // prints dependencies
+		
+		String parsed = qtyAndUnits;
+		
+		PennTreebankTokenizer tokenizer = new PennTreebankTokenizer(new StringReader(line));
+		//StringTokenizer tokenizer = new StringTokenizer(line, " *()[]");
+		int index = 1;
+		while (tokenizer.hasNext()){
+			String token = tokenizer.next();
+			if (!indicesToSkip.contains(index) && !token.matches("[()\\[\\]]"))
+				parsed += token + " ";
+			index++;
+		}
+		
 		System.out.println("----------");
 		//System.out.println(parseTree.toString());
 
-		StringTokenizer tokenizer = new StringTokenizer(line, " *()[]");
-		while (tokenizer.hasMoreTokens()){
-			String token = tokenizer.nextToken();
-			if (token.matches(QUANTITY_REGEX)) qty += token+"_";
-			else if (token.matches(measurementRegex)) units += token +"_";
-			else ingredient += " " + token;
-		}
-		String joined = qty+units;
-		if (!joined.isEmpty()) joined = joined.substring(0, joined.length()-1);
-
-		return joined+ingredient;
+		return parsed;
 	}
 
 	private void loadMeasurements(){
