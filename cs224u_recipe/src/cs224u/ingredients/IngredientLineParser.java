@@ -50,8 +50,13 @@ public class IngredientLineParser {
 		GrammaticalStructure gs = gsf.newGrammaticalStructure(parseTree);
 		System.out.println(gs.typedDependenciesCollapsed());
 		ArrayList<TypedDependency> deps = (ArrayList<TypedDependency>) gs.typedDependenciesCollapsed();
+		HashSet<Integer> indicesToSkip = new HashSet<Integer>();
+		
+		
 		for (TypedDependency dep : deps) {
 			if (dep.reln().toString().equals("num")) {
+				indicesToSkip.add(dep.dep().index());
+				indicesToSkip.add(dep.gov().index());
 				System.out.println(dep.dep().label().word());
 				System.out.println(dep.gov().label().word());
 			}
