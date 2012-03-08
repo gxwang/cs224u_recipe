@@ -9,6 +9,7 @@ import java.util.*;
  */
 public class Recipe {
 	
+	private String title;
 	private ArrayList<String> ingredients;
 	private ArrayList<String> directions;
 	private String plaintext;
@@ -21,6 +22,14 @@ public class Recipe {
 		this.ingredients = ingredients;
 		this.directions = directions;
 		this.plaintext = plaintext;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
 	}
 
 	public ArrayList<String> getIngredients() {
@@ -49,7 +58,7 @@ public class Recipe {
 
 	@Override
 	public String toString() {
-		return plaintext;
+		return title + "\n================\n" + plaintext;
 	}
 	
 	
