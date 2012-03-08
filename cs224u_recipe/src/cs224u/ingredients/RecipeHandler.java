@@ -3,11 +3,16 @@ package cs224u.ingredients;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 import java.io.*;
+import java.util.*;
 
 public class RecipeHandler extends DefaultHandler{
 	
+	// Arraylist of recipes we want to store
+	private ArrayList<Recipe> recipes = new ArrayList<Recipe>();
+	
 	// Local object for collecting data as we read through data
-	private Recipe recipe = new Recipe();
+	private Recipe curRecipe = new Recipe();
+	
 	private CharArrayWriter contents = new CharArrayWriter();
 	
 	public void startDocument( ) throws SAXException {
@@ -20,30 +25,31 @@ public class RecipeHandler extends DefaultHandler{
 
 	public void startElement( String namespaceURI, String localName, String qName, Attributes attr ) throws SAXException {
 		contents.reset();
+		// If the element is a new page, then we want to make a new recipe object and toss it in the arraylist
+		if (localName.equals("page")) {
+			curRecipe = new Recipe();
+			recipes.add(curRecipe);
+		}
 	}
 
 	public void endElement( String namespaceURI, String localName, String qName ) throws SAXException {
 		if (localName.equals("page")) {
-			
+			curRecipe.setPlaintext(contents.toString());
+		}
+		else if (localName.equals("title")) {
+			curRecipe.setTitle(contents.toString());
 		}
 			
 	}
 
 	public void characters( char[] ch, int start, int length ) throws SAXException {
-
-		System.out.print( "SAX Event: CHARACTERS[ " );
-
-		try {
-			OutputStreamWriter outw = new OutputStreamWriter(System.out);
-			outw.write( ch, start,length );
-			outw.flush();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		System.out.println( " ]" );
-
+		contents.write(ch, start, length);
 	}
+	
+	public ArrayList<Recipe> getRecipes() {
+		return recipes;
+	}
+	
 
 
 	public static void main( String[] argv ){
@@ -53,13 +59,16 @@ public class RecipeHandler extends DefaultHandler{
 
 			// Create SAX 2 parser...
 			XMLReader xr = XMLReaderFactory.createXMLReader();
-
+			
+			RecipeHandler handler = new RecipeHandler();
+			
 			// Set the ContentHandler...
-			xr.setContentHandler( new RecipeHandler() );
+			xr.setContentHandler(handler);
 
 			// Parse the file...
-			xr.parse( new InputSource(
-					new FileReader( "WikibooksCookbookComplete-20120207011907.xml" )) );
+			xr.parse(new InputSource(new FileReader("WikibooksCookbookComplete-20120207011907.xml")));
+			ArrayList<Recipe> recipes = handler.getRecipes();
+			System.out.println("" + recipes.size() + " total recipes");
 
 		}catch ( Exception e ) {
 			e.printStackTrace();
