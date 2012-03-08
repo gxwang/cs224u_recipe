@@ -60,6 +60,19 @@ public class Recipe {
 	public String toString() {
 		return title + "\n================\n" + plaintext;
 	}
+
+	/**
+	 * The process method does some simple processing to fill in the ingredients and directions
+	 * from the text that is already living in the plaintext field.
+	 */
+	public void process() {
+		System.out.println("^*^*^*^* NEW ENTRY ^*^*^*^*");
+		System.out.println(toString());
+	}
+
+	public boolean isIngredient() {
+		return plaintext.contains("{{recipe");
+	}
 	
 	
 	

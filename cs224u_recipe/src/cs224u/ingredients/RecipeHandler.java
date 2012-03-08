@@ -28,13 +28,16 @@ public class RecipeHandler extends DefaultHandler{
 		// If the element is a new page, then we want to make a new recipe object and toss it in the arraylist
 		if (localName.equals("page")) {
 			curRecipe = new Recipe();
-			recipes.add(curRecipe);
 		}
 	}
 
 	public void endElement( String namespaceURI, String localName, String qName ) throws SAXException {
 		if (localName.equals("page")) {
 			curRecipe.setPlaintext(contents.toString());
+			curRecipe.process();
+			if (curRecipe.isIngredient()) {
+				recipes.add(curRecipe);
+			}
 		}
 		else if (localName.equals("title")) {
 			curRecipe.setTitle(contents.toString());
@@ -49,8 +52,6 @@ public class RecipeHandler extends DefaultHandler{
 	public ArrayList<Recipe> getRecipes() {
 		return recipes;
 	}
-	
-
 
 	public static void main( String[] argv ){
 
