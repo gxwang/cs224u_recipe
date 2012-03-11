@@ -2,10 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="lib" path="/Users/xiangnongwang/Downloads/stanford-corenlp-2012-01-08/stanford-corenlp-2012-01-08.jar" sourcepath="/Users/xiangnongwang/Downloads/stanford-corenlp-2012-01-08/stanford-corenlp-2012-01-08-sources.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="jar:file:/Users/xiangnongwang/Downloads/stanford-corenlp-2012-01-08/stanford-corenlp-2012-01-08-javadoc.jar!/"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="/Users/benjaminholtz/Downloads/stanford-corenlp-2012-01-08/stanford-corenlp-2012-01-08.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

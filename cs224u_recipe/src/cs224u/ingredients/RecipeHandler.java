@@ -34,8 +34,8 @@ public class RecipeHandler extends DefaultHandler{
 	public void endElement( String namespaceURI, String localName, String qName ) throws SAXException {
 		if (localName.equals("page")) {
 			curRecipe.setPlaintext(contents.toString());
-			curRecipe.process();
 			if (curRecipe.isIngredient()) {
+				curRecipe.process();
 				recipes.add(curRecipe);
 			}
 		}
@@ -70,6 +70,7 @@ public class RecipeHandler extends DefaultHandler{
 			xr.parse(new InputSource(new FileReader("WikibooksCookbookComplete-20120207011907.xml")));
 			ArrayList<Recipe> recipes = handler.getRecipes();
 			System.out.println("" + recipes.size() + " total recipes");
+			System.out.println(recipes.get(0).getIngredients());
 
 		}catch ( Exception e ) {
 			e.printStackTrace();

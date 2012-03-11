@@ -1,6 +1,11 @@
 package cs224u.ingredients;
 
+import java.io.FileReader;
 import java.util.*;
+
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 /**
  * The Recipe class is just meant to be a container for a single recipe.
@@ -22,6 +27,32 @@ public class Recipe {
 		this.ingredients = ingredients;
 		this.directions = directions;
 		this.plaintext = plaintext;
+	}
+	
+	/**
+	 * Returns a list of recipes that are mostly parsed
+	 */
+	public static ArrayList<Recipe> buildRecipes() {
+		ArrayList<Recipe> recipes;
+		try {
+
+			// Create SAX 2 parser...
+			XMLReader xr = XMLReaderFactory.createXMLReader();
+
+			RecipeHandler handler = new RecipeHandler();
+
+			// Set the ContentHandler...
+			xr.setContentHandler(handler);
+
+			// Parse the file...
+			xr.parse(new InputSource(new FileReader("WikibooksCookbookComplete-20120207011907.xml")));
+			recipes = handler.getRecipes();
+
+		}catch ( Exception e ) {
+			e.printStackTrace();
+			return null;
+		}
+		return recipes;
 	}
 
 	public String getTitle() {
@@ -63,11 +94,20 @@ public class Recipe {
 
 	/**
 	 * The process method does some simple processing to fill in the ingredients and directions
-	 * from the text that is already living in the plaintext field.
+	 * from the text that is already living in the plaintext field. Right now the goal is to start 
+	 * by making it smart enough to find recipes with a simple format.
 	 */
 	public void process() {
-		System.out.println("^*^*^*^* NEW ENTRY ^*^*^*^*");
-		System.out.println(toString());
+		int ingredientsIndex = plaintext.indexOf("== Ingredients");
+		ArrayList<String> ingredients = new ArrayList<String>();
+		int starIndex = plaintext.indexOf('*', ingredientsIndex + 1);
+		int newlineIndex = plaintext.indexOf('\n', starIndex + 1);
+		while (starIndex < newlineIndex && starIndex != -1) {
+			ingredients.add(plaintext.substring(starIndex + 1, newlineIndex));
+			starIndex = plaintext.indexOf('*', starIndex + 1);
+			newlineIndex = plaintext.indexOf('\n', newlineIndex + 1);
+		}
+		this.ingredients = ingredients;
 	}
 
 	public boolean isIngredient() {
