@@ -15,25 +15,28 @@ import edu.stanford.nlp.trees.PennTreebankLanguagePack;
 import edu.stanford.nlp.trees.PennTreebankTokenizer;
 import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeGraphNode;
-import edu.stanford.nlp.trees.TreePrint;
 import edu.stanford.nlp.trees.TreebankLanguagePack;
 import edu.stanford.nlp.trees.TypedDependency;
 
 public class IngredientLineParser {
 
 	private static String MEASUREMENTS_FILE = "measurements";
-	private static String TEST_FILE = "ingred_test";
+	private static String TEST_FILE = "sampleIngreds.txt";
 	private static String QUANTITY_REGEX = "(\\d++(?! */))? *-? *(?:(\\d+) */ *(\\d+))?";
 	private static String[] test = {"2 pints milk","4 garlic cloves"};
 	private String measurementRegex;
 	private static ArrayList<String> testLines = new ArrayList<String>();
 	private LexicalizedParser lexParser;
+	private GrammaticalStructureFactory gsf;
 
 	public IngredientLineParser(){
 		measurementRegex = "";
 		loadMeasurements();
+		
 		lexParser = new LexicalizedParser("englishPCFG.ser.gz");
-		lexParser.getOp().setOptions(new String[]{"-outputFormat", "typedDependenciesCollapsed", "-retainTmpSubcategories"});
+		//lexParser.getOp().setOptions(new String[]{"-outputFormat", "typedDependenciesCollapsed", "-retainTmpSubcategories"});
+		TreebankLanguagePack tlp = new PennTreebankLanguagePack();
+		gsf = tlp.grammaticalStructureFactory();
 		//		TokenizerFactory<CoreLabel> tokenizerFactory = PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
 	}
 
@@ -42,64 +45,142 @@ public class IngredientLineParser {
 	 * which quantities fit with which units. Then it joins the quantity with the associated units and
 	 * re-parses the ingredient line.
 	 */
-	public String parseLine(String line){
+	public Ingredient parseLine(String line){
 
-		String qty = "";
-		String units = "";
-		String ingredient = "";
-
+		line = line.replaceAll("\\((.*?)\\)", "");
 		Tree parseTree = lexParser.apply(line);
-		
-		/* Boilerplate for getting typed dependencies */
-		TreebankLanguagePack tlp = new PennTreebankLanguagePack();
-		GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
-		TreePrint tp = new TreePrint("typedDependenciesCollapsed");
+
 		GrammaticalStructure gs = gsf.newGrammaticalStructure(parseTree);
-		//System.out.println(gs.typedDependenciesCollapsed());
-		
 		ArrayList<TypedDependency> deps = (ArrayList<TypedDependency>) gs.typedDependenciesCollapsed();
+	
+		//Ingredient ingred = new Ingredient();
 		
 		HashSet<Integer> indicesToSkip = new HashSet<Integer>(); // Skip these indicies when recreating sentence
-		
+
 		String qtyAndUnits = "";
-		
+
+		/* loop through the depedencies to pick out qty and units*/
 		for (TypedDependency dep : deps) {
 			String relation = dep.reln().toString();
 			TreeGraphNode dependent = dep.dep();
 			TreeGraphNode governor = dep.gov();
-			String depStr = dependent.label().word();
-			String govStr = governor.label().word();
-			
+			String depStr = dependent.nodeString();
+			String govStr = governor.nodeString();
+
 			if (govStr.matches(measurementRegex) && (relation.equals("num") || relation.equals("number"))) {
 				indicesToSkip.add(dependent.index());
 				indicesToSkip.add(governor.index());
 				qtyAndUnits += depStr + "_" + govStr + " ";
 			}		
 		}
-		
-		//System.out.println(indicesToSkip.toString());
-		
+
 		System.out.println();
 		//tp.printTree(parseTree); // prints dependencies
+
+		String parsed = "";
 		
-		String parsed = qtyAndUnits;
-		
+		/* reconstitute string */
 		PennTreebankTokenizer tokenizer = new PennTreebankTokenizer(new StringReader(line));
 		//StringTokenizer tokenizer = new StringTokenizer(line, " *()[]");
 		int index = 1;
 		while (tokenizer.hasNext()){
 			String token = tokenizer.next();
-			if (!indicesToSkip.contains(index) && !token.matches("[()\\[\\]]"))
+			if (!indicesToSkip.contains(index))
 				parsed += token + " ";
 			index++;
 		}
-		
+
 		System.out.println("----------");
 		//System.out.println(parseTree.toString());
-
-		return parsed;
+		//parsed = parsed.replaceAll("\\((.*?)\\)", "");
+		System.out.println(parsed);
+		
+		return composeIngredientObject(parsed, qtyAndUnits);
 	}
 
+	
+	public Ingredient composeIngredientObject(String line, String qty){
+		Ingredient ingred = new Ingredient();
+		ingred.setQuant(qty);
+		//String base = "NONE";
+		
+		Tree parseTree = lexParser.apply(line);
+		
+		/* Boilerplate for getting typed dependencies */
+		GrammaticalStructure gs = gsf.newGrammaticalStructure(parseTree);
+		//System.out.println(gs.typedDependenciesCollapsed());
+		ArrayList<TypedDependency> deps = (ArrayList<TypedDependency>) gs.typedDependenciesCollapsed();
+		
+		for (TypedDependency dep : deps) {
+			TreeGraphNode depNode = dep.dep();
+			TreeGraphNode govNode = dep.gov();
+			String depPos = depNode.parent().nodeString();
+			
+			String relation = dep.reln().toString();
+			String depStr = depNode.nodeString();
+			String govStr = govNode.nodeString();
+			if (relation.equals("root")){
+				if (depPos.startsWith("N")) ingred.setBase(depStr);
+				continue;
+			} 
+			String base = ingred.getBase();
+			String govPos = govNode.parent().nodeString();
+			if (relation.equals("nn") || relation.equals("appos") || (relation.equals("amod") && !ingred.getQuant().contains(depStr))){
+				//System.out.println(relation + " dep: " + depNode.nodeString() +  depPos +" gov: " + govNode.nodeString() + govPos);
+				if (base.equals(Ingredient.NULL) && govPos.startsWith("N")) ingred.setBase(govStr);
+				if (govStr.equals(base)) ingred.addToProps(depStr);
+			} else if (relation.equals("nsubj")) {
+				ingred.addToProps(govNode.nodeString());
+				if (base.equals(Ingredient.NULL) && depPos.startsWith("N")) ingred.setBase(depStr);
+				if (depStr.equals(base)) ingred.addToProps(govStr);
+			}
+		}
+		
+		return ingred;
+	}
+	
+
+	private class Ingredient{
+		private String base;
+		private HashSet<String> properties;
+		private String quantities;
+		public static final String NULL = "<NULL>";
+		
+		public Ingredient(){
+			base = NULL;
+			properties = new HashSet<String>();	
+		}
+		
+		public void setBase(String ingred){
+			base = ingred;
+		}
+		
+		public String getBase(){
+			return base;
+		}
+		
+		public void addToProps(String prop){
+			properties.add(prop);
+		}
+		
+		public HashSet<String> getProps(){
+			return properties;
+		}
+		
+		public void setQuant(String quant){
+			quantities = quant;
+		}
+		
+		public String getQuant(){
+			return quantities;
+		}
+		
+		@Override
+		public String toString(){
+			return "Ingredient: " + base + " Quant: " + quantities + " Properties: " + properties.toString();
+		}
+	}
+	
 	private void loadMeasurements(){
 		BufferedReader in = null;
 		String line = null;
@@ -116,6 +197,25 @@ public class IngredientLineParser {
 		}
 	}
 
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		IngredientLineParser lnParse= new IngredientLineParser();
+
+		//		for (int i = 0; i < test.length; i++){
+		//			System.out.println(test[i] + " -> " + lnParse.parseLine(test[i]));
+		//		}
+		loadTest();
+		for (String ln : testLines) {
+			Ingredient modLine = lnParse.parseLine(ln);
+			System.out.println(ln + ": " + modLine.toString());
+			//System.out.println(lnParse.extractBaseIngredient(modLine).toString());
+		}
+
+
+	}
+
 	private static void loadTest(){
 		BufferedReader in = null;
 		String line = null;
@@ -130,24 +230,6 @@ public class IngredientLineParser {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		IngredientLineParser lnParse= new IngredientLineParser();
-
-		//		for (int i = 0; i < test.length; i++){
-		//			System.out.println(test[i] + " -> " + lnParse.parseLine(test[i]));
-		//		}
-		loadTest();
-		for (String ln : testLines) {
-			System.out.println(ln + " -> " + lnParse.parseLine(ln));
-		}
-
-
 	}
 
 }
