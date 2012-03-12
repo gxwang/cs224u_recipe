@@ -118,13 +118,16 @@ public class Recipe {
 	 */
 	private void structureCategories() {
 		ArrayList<String> categories = new ArrayList<String>();
-		int curIndex = 0;
+		int endIndex = 0;
 		while (true) {
-			curIndex = plaintext.indexOf("[[Category:");
+			int curIndex = plaintext.indexOf("[[Category:", endIndex);
 			if (curIndex == -1) break;
 			int colonIndex = plaintext.indexOf(':', curIndex);
 			int pipeIndex = plaintext.indexOf('|', colonIndex);
-			categories.add(plaintext.substring(colonIndex + 1, pipeIndex));
+			int braceIndex = plaintext.indexOf("]]", colonIndex);
+			endIndex = (pipeIndex == -1 || braceIndex < pipeIndex) ? braceIndex : pipeIndex;
+			String category = plaintext.substring(colonIndex + 1, endIndex);
+			categories.add(category);
 		}
 		this.categories = categories;
 	}

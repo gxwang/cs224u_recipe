@@ -70,33 +70,35 @@ public class RecipeHandler extends DefaultHandler{
 			xr.parse(new InputSource(new FileReader("WikibooksCookbookComplete-20120207011907.xml")));
 			ArrayList<Recipe> recipes = handler.getRecipes();
 			System.out.println("" + recipes.size() + " total recipes");
-			System.out.println(recipes.get(0).getIngredients());
-			ArrayList<String> ingreds;
-			String ingred;
-			Random rand = new Random();
-			BufferedWriter bw = null;
-			try {
-				bw = new BufferedWriter(new FileWriter("sampleIngreds.txt"));
-				int count = 0;
-				int i = 0;
-				while (count < 100 && i < recipes.size()) {
-					ingreds = recipes.get(i).getIngredients();
-					if (ingreds.size() != 0) {
-						ingred = ingreds.get(rand.nextInt(ingreds.size()));
-						bw.write(ingred); bw.newLine();
-						System.out.println(ingred);
-						count++;
-					}
-					i++;
-				}	
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-			}
-			finally {
-				bw.flush();
-				bw.close();
-			}
+			for (int i = 0 ; i < 30; i++) {
+				System.out.println(recipes.get(0).getIngredients());
+			}	
+//			ArrayList<String> ingreds;
+//			String ingred;
+//			Random rand = new Random();
+//			BufferedWriter bw = null;
+//			try {
+//				bw = new BufferedWriter(new FileWriter("sampleIngreds.txt"));
+//				int count = 0;
+//				int i = 0;
+//				while (count < 100 && i < recipes.size()) {
+//					ingreds = recipes.get(i).getIngredients();
+//					if (ingreds.size() != 0) {
+//						ingred = ingreds.get(rand.nextInt(ingreds.size()));
+//						bw.write(ingred); bw.newLine();
+//						System.out.println(ingred);
+//						count++;
+//					}
+//					i++;
+//				}	
+//			}
+//			catch (Exception e) {
+//				e.printStackTrace();
+//			}
+//			finally {
+//				bw.flush();
+//				bw.close();
+//			}
 		}catch ( Exception e ) {
 			e.printStackTrace();
 		}
