@@ -17,16 +17,18 @@ public class Recipe {
 	private String title;
 	private ArrayList<String> ingredients;
 	private ArrayList<String> directions;
+	private ArrayList<String> categories;
 	private String plaintext;
 
 	public Recipe() {
 	}
 
 	public Recipe(ArrayList<String> ingredients, ArrayList<String> directions,
-			String plaintext) {
+			String plaintext, ArrayList<String> categories) {
 		this.ingredients = ingredients;
 		this.directions = directions;
 		this.plaintext = plaintext;
+		this.categories = categories;
 	}
 	
 	/**
@@ -53,6 +55,14 @@ public class Recipe {
 			return null;
 		}
 		return recipes;
+	}
+
+	public ArrayList<String> getCategories() {
+		return categories;
+	}
+
+	public void setCategories(ArrayList<String> categories) {
+		this.categories = categories;
 	}
 
 	public String getTitle() {
@@ -100,8 +110,30 @@ public class Recipe {
 	public void structure() {
 		structureIngredients();
 		structureDirections();
+		structureCategories();
 	}
 	
+	/**
+	 * Every recipe belongs to a category. We want to grab as many of those categories as possible.
+	 */
+	private void structureCategories() {
+		ArrayList<String> categories = new ArrayList<String>();
+		int curIndex = 0;
+		while (true) {
+			curIndex = plaintext.indexOf("[[Category:");
+			if (curIndex == -1) break;
+			int colonIndex = plaintext.indexOf(':', curIndex);
+			int pipeIndex = plaintext.indexOf('|', colonIndex);
+			categories.add(plaintext.substring(colonIndex + 1, pipeIndex));
+		}
+		this.categories = categories;
+	}
+
+	/**
+	 * Find all ingredients! Current uses the following approach: find the line that is
+	 * just "== Ingredients ==" and then pull every subsequent line that starts with an asterisk
+	 * We need to also grab lines that start with a colon, and maybe check for other indicators
+	 */
 	public void structureIngredients() {
 		int ingredientsIndex = plaintext.indexOf("== Ingredients");
 		ArrayList<String> ingredients = new ArrayList<String>();
@@ -128,6 +160,16 @@ public class Recipe {
 		return plaintext.contains("{{recipe");
 	}
 	
-	
+	/**
+	 * 
+	 * @param r1 - A recipe we want to compare 
+	 * @param r2 - The recipe we want to compare to
+	 * @return A value in [0,1] that represents how similar the recipes <strong>r1</strong> and 
+	 *  <strong>r2</strong> are. A value of 1 should be given for the same recipe and a value of 0 
+	 *  should be assigned for recipes with no relation.
+	 */
+	public static double similarity(Recipe r1, Recipe r2) {
+		return 0;
+	}
 	
 }
