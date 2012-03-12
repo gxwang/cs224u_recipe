@@ -34,8 +34,8 @@ public class RecipeHandler extends DefaultHandler{
 	public void endElement( String namespaceURI, String localName, String qName ) throws SAXException {
 		if (localName.equals("page")) {
 			curRecipe.setPlaintext(contents.toString());
-			if (curRecipe.isIngredient()) {
-				curRecipe.process();
+			if (curRecipe.isRecipe()) {
+				curRecipe.structure();
 				recipes.add(curRecipe);
 			}
 		}

@@ -93,11 +93,16 @@ public class Recipe {
 	}
 
 	/**
-	 * The process method does some simple processing to fill in the ingredients and directions
-	 * from the text that is already living in the plaintext field. Right now the goal is to start 
-	 * by making it smart enough to find recipes with a simple format.
+	 * This method should do any of the work involved in converting the unstructured
+	 * <code>plaintext</code> data into structured fields that we can work with more 
+	 * easily.
 	 */
-	public void process() {
+	public void structure() {
+		structureIngredients();
+		structureDirections();
+	}
+	
+	public void structureIngredients() {
 		int ingredientsIndex = plaintext.indexOf("== Ingredients");
 		ArrayList<String> ingredients = new ArrayList<String>();
 		int starIndex = plaintext.indexOf('*', ingredientsIndex + 1);
@@ -109,8 +114,17 @@ public class Recipe {
 		}
 		this.ingredients = ingredients;
 	}
+	
+	public void structureDirections() {
+		
+	}
 
-	public boolean isIngredient() {
+	/**
+	 * 
+	 * @return <code>True</code> if the <code>plaintext</code> is a recipe (as opposed
+	 * to an ingredient page or category)
+	 */
+	public boolean isRecipe() {
 		return plaintext.contains("{{recipe");
 	}
 	

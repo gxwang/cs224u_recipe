@@ -47,6 +47,7 @@ public class IngredientLineParser {
 	 */
 	public Ingredient parseLine(String line){
 
+		line = IngredientLineParser.stripWikiLinks(line); // pull out the wikilinks
 		line = line.replaceAll("\\((.*?)\\)", "");
 		Tree parseTree = lexParser.apply(line);
 
@@ -230,6 +231,18 @@ public class IngredientLineParser {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private static String stripWikiLinks(String line) {
+		int sBracesIndex = line.indexOf("[[");
+		if (sBracesIndex == -1) {
+			return line;
+		}
+		int pipeIndex = line.indexOf('|', sBracesIndex);
+		int endBracesIndex = line.indexOf("]]", pipeIndex);
+		return line.substring(0, sBracesIndex) 
+				+ line.substring(pipeIndex + 1, endBracesIndex) 
+				+ stripWikiLinks(line.substring(endBracesIndex+2));
 	}
 
 }
