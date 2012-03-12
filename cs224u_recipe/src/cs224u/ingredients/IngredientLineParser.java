@@ -1,8 +1,10 @@
 package cs224u.ingredients;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -101,6 +103,7 @@ public class IngredientLineParser {
 
 	
 	public Ingredient composeIngredientObject(String line, String qty){
+		line = line.replaceAll(" of ", "");
 		Ingredient ingred = new Ingredient();
 		ingred.setQuant(qty);
 		//String base = "NONE";
@@ -129,10 +132,12 @@ public class IngredientLineParser {
 			if (relation.equals("nn") || relation.equals("appos") || (relation.equals("amod") && !ingred.getQuant().contains(depStr))){
 				//System.out.println(relation + " dep: " + depNode.nodeString() +  depPos +" gov: " + govNode.nodeString() + govPos);
 				if (base.equals(Ingredient.NULL) && govPos.startsWith("N")) ingred.setBase(govStr);
+				base = ingred.getBase();
 				if (govStr.equals(base)) ingred.addToProps(depStr);
 			} else if (relation.equals("nsubj")) {
 				ingred.addToProps(govNode.nodeString());
 				if (base.equals(Ingredient.NULL) && depPos.startsWith("N")) ingred.setBase(depStr);
+				base = ingred.getBase();
 				if (depStr.equals(base)) ingred.addToProps(govStr);
 			}
 		}
@@ -208,12 +213,31 @@ public class IngredientLineParser {
 		//			System.out.println(test[i] + " -> " + lnParse.parseLine(test[i]));
 		//		}
 		loadTest();
-		for (String ln : testLines) {
-			Ingredient modLine = lnParse.parseLine(ln);
-			System.out.println(ln + ": " + modLine.toString());
-			//System.out.println(lnParse.extractBaseIngredient(modLine).toString());
+		
+		BufferedWriter bw = null;
+		try {
+			bw = new BufferedWriter(new FileWriter("ingredEval.txt"));
+			
+			for (String ln : testLines) {
+				Ingredient modLine = lnParse.parseLine(ln);
+				bw.write(ln + ": " + modLine.toString());
+				bw.newLine();
+				//System.out.println(lnParse.extractBaseIngredient(modLine).toString());
+			}	
 		}
-
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			try {
+				bw.flush();
+				bw.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
 
 	}
 
@@ -234,6 +258,7 @@ public class IngredientLineParser {
 	}
 	
 	private static String stripWikiLinks(String line) {
+		line = line.replaceAll("\\*", "");
 		int sBracesIndex = line.indexOf("[[");
 		if (sBracesIndex == -1) {
 			return line;

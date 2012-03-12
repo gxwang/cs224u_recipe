@@ -1,3 +1,6 @@
+/*
+ * Bag of words
+ */
 package cs224u.ingredients;
 
 import java.util.List;
