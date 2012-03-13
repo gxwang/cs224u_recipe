@@ -17,6 +17,28 @@ public class Counter <E> implements Serializable {
   Map<E, Double> entries;
 
   /**
+   * Let's non-destructively calculate the cosine similarity of the two counters 
+   * @param c1
+   * @param c2
+   * @return Dot product of the normalized vectors
+   */
+  public double cosineSimilarity(Counter<E> c) {
+	  double dotProd = 0.0;
+	  double norm = 0.0;
+	  double normc = 0.0;
+	  for (E key : c.keySet()) {
+		  normc += Math.pow(c.getCount(key), 2.0);
+		  if (this.containsKey(key)) {
+			  dotProd += this.getCount(key) * c.getCount(key);
+		  }
+	  }
+	  for (E key : this.keySet()) {
+		  norm += Math.pow(this.getCount(key),2.0);
+	  }
+	  return dotProd / Math.sqrt(norm * normc);
+  }
+  
+  /**
    * The elements in the counter.
    *
    * @return set of keys

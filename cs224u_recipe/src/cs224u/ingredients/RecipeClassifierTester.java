@@ -13,6 +13,7 @@ public class RecipeClassifierTester {
 	public static void main(String[] args) {
 		RecipeClassifier classifier = new SimpleRecipeClassifier();
 		List<Recipe> allRecipes = Recipe.buildRecipes();
+		classifier.train(allRecipes);
 		for (int i = 0; i < categories.length; i++ ) {
 			String category = categories[i];
 			List<Recipe> recipes = recipesFromCategory(category, allRecipes);
