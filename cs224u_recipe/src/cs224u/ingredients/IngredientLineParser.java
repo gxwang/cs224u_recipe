@@ -1,5 +1,5 @@
-package cs224u.ingredients;
 
+package cs224u.ingredients;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
@@ -20,44 +20,50 @@ import edu.stanford.nlp.trees.TreeGraphNode;
 import edu.stanford.nlp.trees.TreebankLanguagePack;
 import edu.stanford.nlp.trees.TypedDependency;
 
+/**
+ * Class for parsing a given line from the ingredient list into Ingredient objects.
+ */
+
 public class IngredientLineParser {
 
 	private static String MEASUREMENTS_FILE = "measurements";
 	private static String TEST_FILE = "sampleIngreds.txt";
-	private static String QUANTITY_REGEX = "(\\d++(?! */))? *-? *(?:(\\d+) */ *(\\d+))?";
-	private static String[] test = {"2 pints milk","4 garlic cloves"};
-	private String measurementRegex;
+	private String measurementRegex = "";
 	private static ArrayList<String> testLines = new ArrayList<String>();
 	private LexicalizedParser lexParser;
 	private GrammaticalStructureFactory gsf;
 
 	public IngredientLineParser(){
-		measurementRegex = "";
 		loadMeasurements();
-		
 		lexParser = new LexicalizedParser("englishPCFG.ser.gz");
 		//lexParser.getOp().setOptions(new String[]{"-outputFormat", "typedDependenciesCollapsed", "-retainTmpSubcategories"});
 		TreebankLanguagePack tlp = new PennTreebankLanguagePack();
 		gsf = tlp.grammaticalStructureFactory();
-		//		TokenizerFactory<CoreLabel> tokenizerFactory = PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
 	}
 
 	/*
+	 * Takes in a line, parses it for an ingredient, then returns a String  for the base ingredient
+	 */
+	public String extractIngredientString(String line){
+		Ingredient ingredient = parseLine(line);
+		return ingredient.getBase();
+	}
+	
+	/*
 	 * Parses an ingredient line by first running it through the Stanford dependency parser to determine
 	 * which quantities fit with which units. Then it joins the quantity with the associated units and
-	 * re-parses the ingredient line.
+	 * re-parses the ingredient line. Returns an Ingredient object.
 	 */
 	public Ingredient parseLine(String line){
 
 		line = IngredientLineParser.stripWikiLinks(line); // pull out the wikilinks
-		line = line.replaceAll("\\((.*?)\\)", "");
+		line = line.replaceAll("\\((.*?)\\)", ""); // removes all text in parens... for now...
+		
+		/* Retrieves list of dependencies */
 		Tree parseTree = lexParser.apply(line);
-
 		GrammaticalStructure gs = gsf.newGrammaticalStructure(parseTree);
 		ArrayList<TypedDependency> deps = (ArrayList<TypedDependency>) gs.typedDependenciesCollapsed();
-	
-		//Ingredient ingred = new Ingredient();
-		
+
 		HashSet<Integer> indicesToSkip = new HashSet<Integer>(); // Skip these indicies when recreating sentence
 
 		String qtyAndUnits = "";
@@ -70,40 +76,43 @@ public class IngredientLineParser {
 			String depStr = dependent.nodeString();
 			String govStr = governor.nodeString();
 
+			/* Identify the units and quantity of that unit */
 			if (govStr.matches(measurementRegex) && (relation.equals("num") || relation.equals("number"))) {
 				indicesToSkip.add(dependent.index());
 				indicesToSkip.add(governor.index());
-				qtyAndUnits += depStr + "_" + govStr + " ";
+				qtyAndUnits += depStr + "_" + govStr + " "; // join them
 			}		
 		}
 
 		System.out.println();
 		//tp.printTree(parseTree); // prints dependencies
 
-		String parsed = "";
+		String processedLine = "";
 		
 		/* reconstitute string */
 		PennTreebankTokenizer tokenizer = new PennTreebankTokenizer(new StringReader(line));
-		//StringTokenizer tokenizer = new StringTokenizer(line, " *()[]");
 		int index = 1;
 		while (tokenizer.hasNext()){
 			String token = tokenizer.next();
 			if (!indicesToSkip.contains(index))
-				parsed += token + " ";
+				processedLine += token + " ";
 			index++;
 		}
 
-		System.out.println("----------");
+		/* print statements for debugging */
+		//System.out.println("----------");
 		//System.out.println(parseTree.toString());
-		//parsed = parsed.replaceAll("\\((.*?)\\)", "");
-		System.out.println(parsed);
-		
-		return composeIngredientObject(parsed, qtyAndUnits);
+		//System.out.println(parsed);
+		processedLine = processedLine.replaceAll(" of ", " ");
+		return composeIngredientObject(processedLine, qtyAndUnits);
 	}
 
-	
+	/*
+	 * Method that takes a pre-processed String and gathers information
+	 * for a ingredient including the base ingredient and the related
+	 * modifiers. Runs the Stanford parser to find dependencies.
+	 */
 	public Ingredient composeIngredientObject(String line, String qty){
-		line = line.replaceAll(" of ", "");
 		Ingredient ingred = new Ingredient();
 		ingred.setQuant(qty);
 		//String base = "NONE";
@@ -145,7 +154,9 @@ public class IngredientLineParser {
 		return ingred;
 	}
 	
-
+	/*
+	 * Inner class to keep track of ingredient information.
+	 */
 	private class Ingredient{
 		private String base;
 		private HashSet<String> properties;
@@ -187,6 +198,9 @@ public class IngredientLineParser {
 		}
 	}
 	
+	/*
+	 * Loads measurement file of regex to identify units.
+	 */
 	private void loadMeasurements(){
 		BufferedReader in = null;
 		String line = null;
@@ -204,7 +218,8 @@ public class IngredientLineParser {
 	}
 
 	/**
-	 * @param args
+	 * ----------------------------------------------------------------------------------------------------------------
+	 * Main method to test run code.
 	 */
 	public static void main(String[] args) {
 		IngredientLineParser lnParse= new IngredientLineParser();
