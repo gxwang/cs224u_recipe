@@ -19,8 +19,8 @@ public class SimpleRecipeClassifier extends RecipeClassifier {
 		Counter<String> c1 = new Counter<String>();
 		Counter<String> c2 = new Counter<String>();
 		for (String line : is1) {
-			for (String ingred : line.split(" ")) {
-				c1.incrementCount(ingred, 1.0);
+			for (String ingred : line.split(" ")) { // loop over every word in the line
+				c1.incrementCount(ingred, 1.0);     //  
 			}
 		}
 		for (String line : is2) {
@@ -28,7 +28,7 @@ public class SimpleRecipeClassifier extends RecipeClassifier {
 				c2.incrementCount(ingred, 1.0);
 			}
 		}
-		return c1.cosineSimilarity(c2);
+		return  c1.cosineSimilarity(c2);
 	}
 
 }
