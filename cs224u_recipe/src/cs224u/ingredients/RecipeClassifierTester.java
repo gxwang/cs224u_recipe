@@ -32,7 +32,7 @@ public class RecipeClassifierTester {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		RecipeClassifier classifier = new SimpleRecipeClassifier();
+		RecipeClassifier classifier = new CleverRecipeClassifier();
 		List<Recipe> allRecipes = Recipe.buildRecipes();
 		classifier.train(allRecipes);
 		similarityTest(allRecipes, classifier);
@@ -47,7 +47,7 @@ public class RecipeClassifierTester {
 				List<Recipe> recipes1 = recipesFromCategory(cuisine1, allRecipes);
 				List<Recipe> recipes2 = recipesFromCategory(cuisine2, allRecipes);
 				double similarity = calculateSeparation(recipes1, recipes2, classifier);
-				System.out.println("Simple classifier score on categories " + cuisine1 + " and " + cuisine2 + " : " + similarity);
+				System.out.println("Clever classifier score on categories " + cuisine1 + " and " + cuisine2 + " : " + similarity);
 			}
 		}
 	}
