@@ -35,7 +35,7 @@ public class Counter <E> implements Serializable {
 	  for (E key : this.keySet()) {
 		  norm += Math.pow(this.getCount(key),2.0);
 	  }
-	  return dotProd / Math.sqrt(norm * normc);
+	  return  1- dotProd / Math.sqrt(norm * normc);
   }
   
   /**

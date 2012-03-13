@@ -5,7 +5,19 @@ import java.util.*;
 public class RecipeClassifierTester {
 
 	public static String[] categories = {
-			"Bread recipes"
+			"Bread recipes",
+			"Dumpling recipes",
+			"Fried recipes",
+			"Beverage recipes",
+			"Flatbread recipes",
+			"French recipes",
+			"Dessert recipes",
+			"Soup recipes",
+			"Pancake recipes",
+			"Indian recipes",
+			"Fried rice recipes",
+			"Camping recipes"
+			
 	};
 	/**
 	 * @param args
@@ -27,8 +39,11 @@ public class RecipeClassifierTester {
 		double totalSimilarity = 0.0;
 		for (int i = 0; i < recipes.size(); i++) {
 			for (int j = i + 1; j < recipes.size(); j++) {
-				count++;
-				totalSimilarity += classifier.assignSimilarity(recipes.get(i), recipes.get(j));
+				double sim = classifier.assignSimilarity(recipes.get(i), recipes.get(j));
+				if (!Double.isNaN(sim)) {
+					count++;
+					totalSimilarity += sim;
+				} 
 			}
 		}
 		return totalSimilarity / count;
