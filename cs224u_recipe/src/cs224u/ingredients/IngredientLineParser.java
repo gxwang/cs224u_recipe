@@ -84,7 +84,7 @@ public class IngredientLineParser {
 			}		
 		}
 
-		System.out.println();
+		//System.out.println();
 		//tp.printTree(parseTree); // prints dependencies
 
 		String processedLine = "";
