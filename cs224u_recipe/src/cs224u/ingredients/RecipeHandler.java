@@ -14,14 +14,6 @@ public class RecipeHandler extends DefaultHandler{
 	private Recipe curRecipe = new Recipe();
 	
 	private CharArrayWriter contents = new CharArrayWriter();
-	
-	public void startDocument( ) throws SAXException {
-		System.out.println( "SAX Event: START DOCUMENT" );
-	}
-
-	public void endDocument( ) throws SAXException {
-		System.out.println( "SAX Event: END DOCUMENT" );
-	}
 
 	public void startElement( String namespaceURI, String localName, String qName, Attributes attr ) throws SAXException {
 		contents.reset();
