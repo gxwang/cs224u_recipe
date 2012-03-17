@@ -27,7 +27,7 @@ import edu.stanford.nlp.trees.TypedDependency;
 public class IngredientLineParser {
 
 	private static String MEASUREMENTS_FILE = "measurements";
-	private static String TEST_FILE = "sampleIngreds.txt";
+	private static String TEST_FILE = "ingred_test";
 	private String measurementRegex = "";
 	private static ArrayList<String> testLines = new ArrayList<String>();
 	private LexicalizedParser lexParser;
@@ -66,8 +66,7 @@ public class IngredientLineParser {
 
 		HashSet<Integer> indicesToSkip = new HashSet<Integer>(); // Skip these indicies when recreating sentence
 
-		String qtyAndUnits = "";
-
+		IngredientQuantity ingredQuant = new IngredientQuantity();
 		/* loop through the depedencies to pick out qty and units*/
 		for (TypedDependency dep : deps) {
 			String relation = dep.reln().toString();
@@ -80,7 +79,18 @@ public class IngredientLineParser {
 			if (govStr.matches(measurementRegex) && (relation.equals("num") || relation.equals("number"))) {
 				indicesToSkip.add(dependent.index());
 				indicesToSkip.add(governor.index());
-				qtyAndUnits += depStr + "_" + govStr + " "; // join them
+				
+				double quant;
+				String unit = null;
+				try {
+					quant = Double.parseDouble(depStr);
+					unit = govStr;
+				} catch (NumberFormatException e) {
+					quant = Double.parseDouble(govStr);
+					unit = depStr;
+				}
+				ingredQuant.setQuantity(quant);
+				ingredQuant.setUnit(unit);
 			}		
 		}
 
@@ -104,7 +114,11 @@ public class IngredientLineParser {
 		//System.out.println(parseTree.toString());
 		//System.out.println(parsed);
 		processedLine = processedLine.replaceAll(" of ", " ");
-		return composeIngredientObject(processedLine, qtyAndUnits);
+		Ingredient ingred = new Ingredient();
+		//IngredientUnitConverter converter = new IngredientUnitConverter();
+		ingredQuant = IngredientUnitConverter.convert(ingredQuant);
+		ingred.setQuant(ingredQuant);
+		return composeIngredientObject(processedLine, ingred);
 	}
 
 	/*
@@ -112,33 +126,37 @@ public class IngredientLineParser {
 	 * for a ingredient including the base ingredient and the related
 	 * modifiers. Runs the Stanford parser to find dependencies.
 	 */
-	public Ingredient composeIngredientObject(String line, String qty){
-		Ingredient ingred = new Ingredient();
-		ingred.setQuant(qty);
-		//String base = "NONE";
-		
+	public Ingredient composeIngredientObject(String line, Ingredient oldIngred){
+		Ingredient ingred = oldIngred;
+				
 		Tree parseTree = lexParser.apply(line);
 		
 		/* Boilerplate for getting typed dependencies */
 		GrammaticalStructure gs = gsf.newGrammaticalStructure(parseTree);
-		//System.out.println(gs.typedDependenciesCollapsed());
+		//System.out.println(gs.typedDependenciesCollapsed()); // prints out all the dependencies
 		ArrayList<TypedDependency> deps = (ArrayList<TypedDependency>) gs.typedDependenciesCollapsed();
 		
+		/* run the Stanford parser again to find the base ingredient*/
 		for (TypedDependency dep : deps) {
 			TreeGraphNode depNode = dep.dep();
 			TreeGraphNode govNode = dep.gov();
-			String depPos = depNode.parent().nodeString();
+			String depPos = depNode.parent().nodeString(); // dependant POS
 			
 			String relation = dep.reln().toString();
 			String depStr = depNode.nodeString();
 			String govStr = govNode.nodeString();
+			
+			/* if the relation is root and its a noun, that is our ingredient */
 			if (relation.equals("root")){
 				if (depPos.startsWith("N")) ingred.setBase(depStr);
 				continue;
 			} 
+			
 			String base = ingred.getBase();
-			String govPos = govNode.parent().nodeString();
-			if (relation.equals("nn") || relation.equals("appos") || (relation.equals("amod") && !ingred.getQuant().contains(depStr))){
+			String govPos = govNode.parent().nodeString(); // governor POS
+			
+			/* identifies different forms of modifiers and also helps identify base ingredients if we missed it somehow */
+			if (relation.equals("nn") || relation.equals("appos") || (relation.equals("amod") && !ingred.getQuant().toString().contains(depStr))){
 				//System.out.println(relation + " dep: " + depNode.nodeString() +  depPos +" gov: " + govNode.nodeString() + govPos);
 				if (base.equals(Ingredient.NULL) && govPos.startsWith("N")) ingred.setBase(govStr);
 				base = ingred.getBase();
@@ -160,7 +178,7 @@ public class IngredientLineParser {
 	private class Ingredient{
 		private String base;
 		private HashSet<String> properties;
-		private String quantities;
+		private IngredientQuantity quantities;
 		public static final String NULL = "<NULL>";
 		
 		public Ingredient(){
@@ -184,17 +202,17 @@ public class IngredientLineParser {
 			return properties;
 		}
 		
-		public void setQuant(String quant){
+		public void setQuant(IngredientQuantity quant){
 			quantities = quant;
 		}
 		
-		public String getQuant(){
+		public IngredientQuantity getQuant(){
 			return quantities;
 		}
 		
 		@Override
 		public String toString(){
-			return "Ingredient: " + base + " Quant: " + quantities + " Properties: " + properties.toString();
+			return "Ingredient: " + base + " Quant: " + quantities.toString() + " Properties: " + properties.toString();
 		}
 	}
 	
