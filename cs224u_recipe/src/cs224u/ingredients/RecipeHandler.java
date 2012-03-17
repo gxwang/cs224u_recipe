@@ -14,14 +14,6 @@ public class RecipeHandler extends DefaultHandler{
 	private Recipe curRecipe = new Recipe();
 	
 	private CharArrayWriter contents = new CharArrayWriter();
-	
-	public void startDocument( ) throws SAXException {
-		System.out.println( "SAX Event: START DOCUMENT" );
-	}
-
-	public void endDocument( ) throws SAXException {
-		System.out.println( "SAX Event: END DOCUMENT" );
-	}
 
 	public void startElement( String namespaceURI, String localName, String qName, Attributes attr ) throws SAXException {
 		contents.reset();
@@ -70,8 +62,8 @@ public class RecipeHandler extends DefaultHandler{
 			xr.parse(new InputSource(new FileReader("WikibooksCookbookComplete-20120207011907.xml")));
 			ArrayList<Recipe> recipes = handler.getRecipes();
 			System.out.println("" + recipes.size() + " total recipes");
-			for (int i = 0 ; i < 30; i++) {
-				System.out.println(recipes.get(0).getIngredients());
+			for (int i = 0 ; i < 100; i++) {
+				System.out.println(recipes.get(i).getIngredients());
 			}	
 //			ArrayList<String> ingreds;
 //			String ingred;
