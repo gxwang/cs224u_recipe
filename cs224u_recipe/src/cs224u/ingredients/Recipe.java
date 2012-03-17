@@ -137,13 +137,14 @@ public class Recipe {
 	 * just "== Ingredients ==" and then pull every subsequent line that starts with an asterisk
 	 * We need to also grab lines that start with a colon, and maybe check for other indicators
 	 */
-	public void structureIngredients() {
+	private void structureIngredients() {
 		int ingredientsIndex = plaintext.indexOf("== Ingredients");
 		ArrayList<String> ingredients = new ArrayList<String>();
 		int starIndex = plaintext.indexOf('*', ingredientsIndex + 1);
 		int newlineIndex = plaintext.indexOf('\n', starIndex + 1);
 		while (starIndex < newlineIndex && starIndex != -1) {
-			ingredients.add(plaintext.substring(starIndex + 1, newlineIndex));
+			String ingredientLine = plaintext.substring(starIndex + 1, newlineIndex);
+			ingredients.add(ingredientLine);
 			starIndex = plaintext.indexOf('*', starIndex + 1);
 			newlineIndex = plaintext.indexOf('\n', newlineIndex + 1);
 		}
