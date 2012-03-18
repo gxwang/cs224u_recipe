@@ -6,31 +6,44 @@ import cs224n.util.Counter;
 
 public class CleverRecipeClassifier extends RecipeClassifier {
 
-	IngredientLineParser ilparser;
+	Counter<String> unitWeight;
 
 	public CleverRecipeClassifier() {
-		ilparser = new IngredientLineParser();
 	}
 
 	@Override
 	public void train(List<Recipe> recipes) {
-		// TODO Auto-generated method stub
+		unitWeight = new Counter<String>();
+		for (Recipe recipe : recipes) {
+			for (Ingredient ingredient : recipe.getStructuredIngredients()) {
+				String unit = ingredient.getQuant().getUnit();
+				if (!unitWeight.containsKey(unit)) {
+					unitWeight.setCount(unit, 1.0);
+				}
+			}
+		}
 
 	}
 
 	@Override
 	public double assignSimilarity(Recipe r1, Recipe r2) {
-		List<String> is1 = r1.getIngredients();
-		List<String> is2 = r2.getIngredients();
+		List<Ingredient> is1 = r1.getStructuredIngredients();
+		List<Ingredient> is2 = r2.getStructuredIngredients();
 		Counter<String> c1 = new Counter<String>();
 		Counter<String> c2 = new Counter<String>();
-		for (String line : is1) {
-			String ingred = ilparser.extractIngredientString(line);
-			c1.incrementCount(ingred, 1.0);   
+		for (Ingredient ingredient : is1) {
+			String ingred = ingredient.getBaseIngredient();
+			double quantity = ingredient.getQuant().getQuantity();
+			double weight = unitWeight.getCount(ingredient.getQuant().getUnit());
+			if (weight == 0) weight++;
+			c1.incrementCount(ingred, weight * quantity);   
 		}
-		for (String line : is2) {
-			String ingred = ilparser.extractIngredientString(line);
-			c2.incrementCount(ingred, 1.0);
+		for (Ingredient ingredient : is2) {
+			String ingred = ingredient.getBaseIngredient();
+			double quantity = ingredient.getQuant().getQuantity();
+			double weight = unitWeight.getCount(ingredient.getQuant().getUnit());
+			if (weight == 0) weight++;
+			c2.incrementCount(ingred, weight * quantity);  
 		}
 		return  c1.cosineSimilarity(c2);
 	}
