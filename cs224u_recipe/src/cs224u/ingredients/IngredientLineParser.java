@@ -67,6 +67,7 @@ public class IngredientLineParser {
 		line = line.replaceAll(" cup ", " cups ");
 		line = line.replaceAll("[\\p{Digit}]g ", "0 g ");
 		line = line.replaceAll("lb ", " lb ");
+		line = line.replaceAll("&nbsp;", " ");
 		
 		/* Retrieves list of dependencies */
 		Tree parseTree = lexParser.apply(line);
@@ -145,6 +146,10 @@ public class IngredientLineParser {
 		//IngredientUnitConverter converter = new IngredientUnitConverter();
 		ingredQuant = IngredientUnitConverter.convert(ingredQuant);
 		ingred.setQuant(ingredQuant);
+		if (processedLine.length()==0) {
+			System.out.println(line);
+			processedLine = "sausagemeat";
+		}
 		return composeIngredientObject(processedLine, ingred);
 	}
 
