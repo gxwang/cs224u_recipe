@@ -29,7 +29,7 @@ import edu.stanford.nlp.trees.TypedDependency;
 public class IngredientLineParser {
 
 	private static String MEASUREMENTS_FILE = "measurements";
-	private static String TEST_FILE = "ingred_test";
+	private static String TEST_FILE = "sampleIngreds.txt";
 	private String measurementRegex = "";
 	private static ArrayList<String> testLines = new ArrayList<String>();
 	private LexicalizedParser lexParser;
@@ -65,6 +65,7 @@ public class IngredientLineParser {
 		line = Normalizer.normalize(line, Normalizer.Form.NFKD);
 		line = line.replaceAll(""+(char)8260, "/");
 		line = line.replaceAll(" cup ", " cups ");
+		line = line.replaceAll("[\\p{Digit}]g ", "0 g ");
 		
 		/* Retrieves list of dependencies */
 		Tree parseTree = lexParser.apply(line);
@@ -140,7 +141,7 @@ public class IngredientLineParser {
 		double numerator;
 		double denom;
 		fractionStr = fractionStr.trim();
-		System.out.println((int) fractionStr.charAt(1));
+		//System.out.println((int) fractionStr.charAt(1));
 		int wholeSplit = 0;
 		if (fractionStr.contains(" ") || fractionStr.contains(""+(char) 160)) {
 			wholeSplit = fractionStr.indexOf(' ');

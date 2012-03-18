@@ -47,7 +47,7 @@ public class IngredientUnitConverter {
 			unitChangeMod = QUART_TO_ML;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
-		else if (unit.matches("gallon(s)?|g(s)?|gal(s)?")) {
+		else if (unit.matches("gallon(s)?|gal(s)?")) {
 			unitChangeMod = GAL_TO_ML;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
