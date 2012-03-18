@@ -1,6 +1,10 @@
 package cs224u.ingredients;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,8 +16,12 @@ import org.xml.sax.helpers.XMLReaderFactory;
  * @author benjaminholtz
  *
  */
-public class Recipe {
+public class Recipe implements java.io.Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4045383009678614631L;
 	private String title;
 	private ArrayList<String> ingredients;
 	private ArrayList<String> directions;
@@ -45,6 +53,7 @@ public class Recipe {
 
 	/**
 	 * Returns a list of recipes that are mostly parsed
+	 * @throws IOException 
 	 */
 	public static ArrayList<Recipe> buildRecipes() {
 		ArrayList<Recipe> recipes;
@@ -65,6 +74,17 @@ public class Recipe {
 		}catch ( Exception e ) {
 			e.printStackTrace();
 			return null;
+		}
+		try {
+			String filename = "recipes.txt";
+			FileOutputStream out = new FileOutputStream(filename);
+			ObjectOutputStream outStream = new ObjectOutputStream(out);
+			outStream.writeObject(recipes);
+			outStream.close();
+			out.close();
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
 		}
 		return recipes;
 	}

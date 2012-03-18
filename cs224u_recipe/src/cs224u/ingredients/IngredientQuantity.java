@@ -3,7 +3,11 @@ package cs224u.ingredients;
 /*
  * Class to hold a quantity and a unit
  */
-public class IngredientQuantity {
+public class IngredientQuantity implements java.io.Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8377517268438246774L;
 	private String unit;
 	private double quantity;
 	

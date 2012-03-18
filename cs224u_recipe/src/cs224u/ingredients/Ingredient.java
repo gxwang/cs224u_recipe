@@ -2,7 +2,11 @@ package cs224u.ingredients;
 
 import java.util.HashSet;
 
-public class Ingredient{
+public class Ingredient implements java.io.Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8125262703346726147L;
 	private String baseIngredient;
 	private HashSet<String> properties;
 	private IngredientQuantity quantities;
