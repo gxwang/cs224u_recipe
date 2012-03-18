@@ -1,11 +1,15 @@
 package cs224u.ingredients;
 
 import java.io.FileReader;
+import java.io.UnsupportedEncodingException;
+import java.text.Normalizer;
 import java.util.*;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
+
+import edu.stanford.nlp.io.EncodingPrintWriter.out;
 
 /**
  * The Recipe class is just meant to be a container for a single recipe.
@@ -138,14 +142,26 @@ public class Recipe {
 	 * We need to also grab lines that start with a colon, and maybe check for other indicators
 	 */
 	private void structureIngredients() {
-		int ingredientsIndex = plaintext.indexOf("== Ingredients");
+		int ingredientsIndex = Math.max(plaintext.indexOf("==Ingredients"), plaintext.indexOf("' Ingredients"));
 		ArrayList<String> ingredients = new ArrayList<String>();
-		int starIndex = plaintext.indexOf('*', ingredientsIndex + 1);
+		char ch = '*';
+		int starIndex = plaintext.indexOf(ch, ingredientsIndex + 1);
+		if (starIndex == -1) {
+			ch = ':';
+			starIndex = plaintext.indexOf(ch, ingredientsIndex + 1);
+		}
 		int newlineIndex = plaintext.indexOf('\n', starIndex + 1);
 		while (starIndex < newlineIndex && starIndex != -1) {
 			String ingredientLine = plaintext.substring(starIndex + 1, newlineIndex);
-			ingredients.add(ingredientLine);
+			ingredients.add(processLine(ingredientLine));
 			starIndex = plaintext.indexOf('*', starIndex + 1);
+			ingredientLine = ingredientLine.trim();
+			if (ingredientLine.length() > 3) {
+				if (ingredientLine.charAt(0) != '(' || ingredientLine.charAt(ingredientLine.length() -1 ) != ')') { //don't bother with lines all in parens
+					ingredients.add(ingredientLine);
+				}
+			}
+			starIndex = plaintext.indexOf(ch, starIndex + 1);
 			newlineIndex = plaintext.indexOf('\n', newlineIndex + 1);
 		}
 		this.ingredients = ingredients;
@@ -154,6 +170,30 @@ public class Recipe {
 	public void structureDirections() {
 		
 	}
+	
+	/**
+	 * Processes a line of recipe text from a dirty to clean form
+	 */
+	private String processLine(String dirty){
+		String clean = "";
+		clean = convertSpecialCharacters(dirty);
+		return clean;
+	}
+	
+	/**
+	 * Converts special characters to text form (e.g. fractions)
+	 */
+	private String convertSpecialCharacters(String dirty){
+		String clean = "";
+		try {
+			byte[] bytes = dirty.getBytes("ISO-8859-1");
+			String converted = new String(bytes, "UTF-8");
+			clean = Normalizer.normalize(converted, Normalizer.Form.NFKD);
+		} catch (UnsupportedEncodingException uee){
+			uee.printStackTrace();
+		}
+		return clean;
+	}
 
 	/**
 	 * 
@@ -161,10 +201,12 @@ public class Recipe {
 	 * to an ingredient page or category)
 	 */
 	public boolean isRecipe() {
-		return plaintext.contains("{{recipe");
+		return plaintext.contains("{{recipe") && plaintext.contains("ngredients");
 	}
 	
 	/**
+	 * @deprecated We probably are not going to use this
+	 * and use instead the in category average similarity measure
 	 * 
 	 * @param r1 - A recipe we want to compare 
 	 * @param r2 - The recipe we want to compare to
@@ -176,4 +218,27 @@ public class Recipe {
 		return 0;
 	}
 	
+	public static void main(String[] args) {
+		System.out.println("Y u no capture ingredients?");
+		int fails = 0;
+		List<String> ingredients;
+		String ingredsWindow = "";
+		List<Recipe> recipes = Recipe.buildRecipes();
+		for (Recipe recipe : recipes) {
+			ingredients = recipe.getIngredients();
+			if (ingredients.size() == 0) {
+				try {
+					ingredsWindow = recipe.plaintext.substring(Math.max(recipe.plaintext.indexOf("Ingredients"), recipe.plaintext.indexOf("ingredients")));
+				}
+				catch (StringIndexOutOfBoundsException e) {
+					System.err.println("Problem in recipe " + recipe.title);
+				}
+				System.out.println(recipe.title + "\n");
+				System.out.println(ingredsWindow);
+				System.out.println("\n^*^*^*^*^*^*^*^*^*^*^*^*^*^*^*^*\n");
+				fails++;
+			}
+		}
+		System.out.println("Failed " + fails + " times");
+	}
 }

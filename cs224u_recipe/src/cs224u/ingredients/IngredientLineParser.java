@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -27,7 +29,7 @@ import edu.stanford.nlp.trees.TypedDependency;
 public class IngredientLineParser {
 
 	private static String MEASUREMENTS_FILE = "measurements";
-	private static String TEST_FILE = "ingred_test";
+	private static String TEST_FILE = "sampleIngreds.txt";
 	private String measurementRegex = "";
 	private static ArrayList<String> testLines = new ArrayList<String>();
 	private LexicalizedParser lexParser;
@@ -79,15 +81,21 @@ public class IngredientLineParser {
 			if (govStr.matches(measurementRegex) && (relation.equals("num") || relation.equals("number"))) {
 				indicesToSkip.add(dependent.index());
 				indicesToSkip.add(governor.index());
-				
+				//depStr = depStr.replaceAll("\\?", "\\/");
 				double quant;
 				String unit = null;
 				try {
-					quant = Double.parseDouble(depStr);
+					if (depStr.contains("/") || depStr.contains("\\/")){
+						quant = formatFraction(depStr);
+					} else {
+						quant = Double.parseDouble(depStr);
+					}
 					unit = govStr;
 				} catch (NumberFormatException e) {
-					quant = Double.parseDouble(govStr);
-					unit = depStr;
+					System.err.println("Number format exception on: " + depStr);
+					quant = -1.0;
+//					quant = Double.parseDouble(govStr);
+//					unit = depStr;
 				}
 				ingredQuant.setQuantity(quant);
 				ingredQuant.setUnit(unit);
@@ -119,6 +127,24 @@ public class IngredientLineParser {
 		ingredQuant = IngredientUnitConverter.convert(ingredQuant);
 		ingred.setQuant(ingredQuant);
 		return composeIngredientObject(processedLine, ingred);
+	}
+
+	private double formatFraction(String fractionStr) {
+		double decimal;
+		double wholeNum = 0.0;
+		double numerator;
+		double denom;
+		fractionStr = fractionStr.trim();
+		int wholeSplit = 0;
+		if (fractionStr.contains(" ")) {
+			wholeSplit = fractionStr.indexOf(' ');
+			wholeNum = Double.parseDouble(fractionStr.substring(0, wholeSplit));
+		}
+		int fracSplit = fractionStr.indexOf("\\/");
+		numerator = Double.parseDouble(fractionStr.substring(wholeSplit, fracSplit));
+		denom = Double.parseDouble(fractionStr.substring(fracSplit+2));
+		decimal = wholeNum + numerator/denom;
+		return decimal;
 	}
 
 	/*
@@ -252,8 +278,24 @@ public class IngredientLineParser {
 			bw = new BufferedWriter(new FileWriter("ingredEval.txt"));
 			
 			for (String ln : testLines) {
-				Ingredient modLine = lnParse.parseLine(ln);
-				bw.write(ln + ": " + modLine.toString());
+				ln = ln.replaceAll("�", " ");
+				ln = ln.replaceAll("⅓", "1/3");
+				ln = ln.replaceAll("⅔", "2/3");
+				String cleanLn = Normalizer.normalize(ln, Normalizer.Form.NFKD);
+//				try {
+//					byte[] bytes = ln.getBytes("ISO-8859-1");
+//					String converted = new String(bytes, "UTF-8");
+//					cleanLn = Normalizer.normalize(converted, Normalizer.Form.NFKD);
+//					
+//				} catch (UnsupportedEncodingException uee){
+//					uee.printStackTrace();
+//				}
+				cleanLn = cleanLn.replaceAll(""+(char)8260, "/");
+				//System.out.println((int)cleanLn.charAt(2));
+				//System.out.print(cleanLn.contains("?"));
+				bw.write(ln + " -> " + cleanLn); bw.newLine();
+				Ingredient modLine = lnParse.parseLine(cleanLn);
+				bw.write(cleanLn + ": " + modLine.toString());
 				bw.newLine();
 				//System.out.println(lnParse.extractBaseIngredient(modLine).toString());
 			}	
