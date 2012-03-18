@@ -32,7 +32,7 @@ public class RecipeClassifierTester {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		RecipeClassifier classifier = new CleverRecipeClassifier();
+		RecipeClassifier classifier = new SimpleRecipeClassifier();
 		List<Recipe> allRecipes = Recipe.buildRecipes();
 		classifier.train(allRecipes);
 		similarityTest(allRecipes, classifier);

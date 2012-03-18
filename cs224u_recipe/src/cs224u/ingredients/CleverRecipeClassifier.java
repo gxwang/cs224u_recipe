@@ -45,7 +45,7 @@ public class CleverRecipeClassifier extends RecipeClassifier {
 			if (weight == 0) weight++;
 			c2.incrementCount(ingred, weight * quantity);  
 		}
-		return  c1.cosineSimilarity(c2);
+		return c1.cosineSimilarity(c2);
 	}
 
 }

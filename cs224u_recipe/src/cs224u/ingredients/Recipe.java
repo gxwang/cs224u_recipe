@@ -165,14 +165,15 @@ public class Recipe {
 		while (starIndex < newlineIndex && starIndex != -1) {
 			String ingredientLine = plaintext.substring(starIndex + 1, newlineIndex);
 			
-			starIndex = plaintext.indexOf('*', starIndex + 1);
+			starIndex = plaintext.indexOf(ch, starIndex + 1);
 			ingredientLine = ingredientLine.trim();
-			if (ingredientLine.length() > 3) {
+			if (ingredientLine.length() > 3 && ingredientLine.length() < 160 && !ingredientLine.contains("[[Category:")) {
 				if (ingredientLine.charAt(0) != '(' || ingredientLine.charAt(ingredientLine.length() -1 ) != ')') { //don't bother with lines all in parens
 					ingredients.add(ingredientLine);
+					structuredIngredients.add(processLine(ingredientLine, ilp));
+					System.out.println(ingredientLine);
 				}
 			}
-			structuredIngredients.add(processLine(ingredientLine, ilp));
 			starIndex = plaintext.indexOf(ch, starIndex + 1);
 			newlineIndex = plaintext.indexOf('\n', newlineIndex + 1);
 		}
