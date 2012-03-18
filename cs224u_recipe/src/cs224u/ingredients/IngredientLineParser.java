@@ -29,7 +29,7 @@ import edu.stanford.nlp.trees.TypedDependency;
 public class IngredientLineParser {
 
 	private static String MEASUREMENTS_FILE = "measurements";
-	private static String TEST_FILE = "sampleIngreds.txt";
+	private static String TEST_FILE = "ingred_test";
 	private String measurementRegex = "";
 	private static ArrayList<String> testLines = new ArrayList<String>();
 	private LexicalizedParser lexParser;
@@ -57,9 +57,14 @@ public class IngredientLineParser {
 	 * re-parses the ingredient line. Returns an Ingredient object.
 	 */
 	public Ingredient parseLine(String line){
-
 		line = IngredientLineParser.stripWikiLinks(line); // pull out the wikilinks
 		line = line.replaceAll("\\((.*?)\\)", ""); // removes all text in parens... for now...
+		line = line.replaceAll("�", " ");
+		line = line.replaceAll("⅓", "1/3");
+		line = line.replaceAll("⅔", "2/3");
+		line = Normalizer.normalize(line, Normalizer.Form.NFKD);
+		line = line.replaceAll(""+(char)8260, "/");
+		line = line.replaceAll(" cup ", " cups ");
 		
 		/* Retrieves list of dependencies */
 		Tree parseTree = lexParser.apply(line);
@@ -121,7 +126,7 @@ public class IngredientLineParser {
 		//System.out.println("----------");
 		//System.out.println(parseTree.toString());
 		//System.out.println(parsed);
-		processedLine = processedLine.replaceAll(" of ", " ");
+		processedLine = processedLine.replaceAll("of ", " ");
 		Ingredient ingred = new Ingredient();
 		//IngredientUnitConverter converter = new IngredientUnitConverter();
 		ingredQuant = IngredientUnitConverter.convert(ingredQuant);
@@ -135,14 +140,19 @@ public class IngredientLineParser {
 		double numerator;
 		double denom;
 		fractionStr = fractionStr.trim();
+		System.out.println((int) fractionStr.charAt(1));
 		int wholeSplit = 0;
-		if (fractionStr.contains(" ")) {
+		if (fractionStr.contains(" ") || fractionStr.contains(""+(char) 160)) {
 			wholeSplit = fractionStr.indexOf(' ');
+			if (wholeSplit==-1) wholeSplit = fractionStr.indexOf(160);
 			wholeNum = Double.parseDouble(fractionStr.substring(0, wholeSplit));
+			wholeSplit++;
 		}
 		int fracSplit = fractionStr.indexOf("\\/");
-		numerator = Double.parseDouble(fractionStr.substring(wholeSplit, fracSplit));
-		denom = Double.parseDouble(fractionStr.substring(fracSplit+2));
+		String num = fractionStr.substring(wholeSplit, fracSplit);
+		numerator = Double.parseDouble(num);
+		String den = fractionStr.substring(fracSplit+2);
+		denom = Double.parseDouble(den);
 		decimal = wholeNum + numerator/denom;
 		return decimal;
 	}
@@ -199,50 +209,6 @@ public class IngredientLineParser {
 	}
 	
 	/*
-	 * Inner class to keep track of ingredient information.
-	 */
-	private class Ingredient{
-		private String base;
-		private HashSet<String> properties;
-		private IngredientQuantity quantities;
-		public static final String NULL = "<NULL>";
-		
-		public Ingredient(){
-			base = NULL;
-			properties = new HashSet<String>();	
-		}
-		
-		public void setBase(String ingred){
-			base = ingred;
-		}
-		
-		public String getBase(){
-			return base;
-		}
-		
-		public void addToProps(String prop){
-			properties.add(prop);
-		}
-		
-		public HashSet<String> getProps(){
-			return properties;
-		}
-		
-		public void setQuant(IngredientQuantity quant){
-			quantities = quant;
-		}
-		
-		public IngredientQuantity getQuant(){
-			return quantities;
-		}
-		
-		@Override
-		public String toString(){
-			return "Ingredient: " + base + " Quant: " + quantities.toString() + " Properties: " + properties.toString();
-		}
-	}
-	
-	/*
 	 * Loads measurement file of regex to identify units.
 	 */
 	private void loadMeasurements(){
@@ -278,24 +244,10 @@ public class IngredientLineParser {
 			bw = new BufferedWriter(new FileWriter("ingredEval.txt"));
 			
 			for (String ln : testLines) {
-				ln = ln.replaceAll("�", " ");
-				ln = ln.replaceAll("⅓", "1/3");
-				ln = ln.replaceAll("⅔", "2/3");
-				String cleanLn = Normalizer.normalize(ln, Normalizer.Form.NFKD);
-//				try {
-//					byte[] bytes = ln.getBytes("ISO-8859-1");
-//					String converted = new String(bytes, "UTF-8");
-//					cleanLn = Normalizer.normalize(converted, Normalizer.Form.NFKD);
-//					
-//				} catch (UnsupportedEncodingException uee){
-//					uee.printStackTrace();
-//				}
-				cleanLn = cleanLn.replaceAll(""+(char)8260, "/");
-				//System.out.println((int)cleanLn.charAt(2));
-				//System.out.print(cleanLn.contains("?"));
-				bw.write(ln + " -> " + cleanLn); bw.newLine();
-				Ingredient modLine = lnParse.parseLine(cleanLn);
-				bw.write(cleanLn + ": " + modLine.toString());
+
+				//bw.write(ln + " -> " + cleanLn); bw.newLine();
+				Ingredient modLine = lnParse.parseLine(ln);
+				bw.write(ln + ": " + modLine.toString());
 				bw.newLine();
 				//System.out.println(lnParse.extractBaseIngredient(modLine).toString());
 			}	

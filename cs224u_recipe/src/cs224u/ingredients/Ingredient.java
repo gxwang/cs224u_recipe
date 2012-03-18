@@ -1,26 +1,44 @@
 package cs224u.ingredients;
 
-public class Ingredient {
+import java.util.HashSet;
 
+public class Ingredient{
 	private String baseIngredient;
-	private double quantity;
-	private String units;
+	private HashSet<String> properties;
+	private IngredientQuantity quantities;
+	public static final String NULL = "<NULL>";
 	
 	public Ingredient() {
 		super();
+		baseIngredient = NULL;
+		properties = new HashSet<String>();	
 	}
 
-	public Ingredient(String baseIngredient, double quantity) {
+	public Ingredient(String baseIngredient, IngredientQuantity quantities) {
 		super();
 		this.baseIngredient = baseIngredient;
-		this.quantity = quantity;
+		this.quantities = quantities;
 	}
 
-	public Ingredient(String baseIngredient, double quantity, String units) {
-		super();
-		this.baseIngredient = baseIngredient;
-		this.quantity = quantity;
-		this.units = units;
+	public void addToProps(String prop){
+		properties.add(prop);
+	}
+	
+	public HashSet<String> getProps(){
+		return properties;
+	}
+	
+	public void setQuant(IngredientQuantity quant){
+		quantities = quant;
+	}
+	
+	public IngredientQuantity getQuant(){
+		return quantities;
+	}
+	
+	@Override
+	public String toString(){
+		return "Ingredient: " + baseIngredient + " Quant: " + quantities.toString() + " Properties: " + properties.toString();
 	}
 	
 	public String getBaseIngredient() {
@@ -28,20 +46,6 @@ public class Ingredient {
 	}
 	public void setBaseIngredient(String baseIngredient) {
 		this.baseIngredient = baseIngredient;
-	}
-	public double getQuantity() {
-		return quantity;
-	}
-	public void setQuantity(double quantity) {
-		this.quantity = quantity;
-	}
-	public String getUnits() {
-		return units;
-	}
-	public void setUnits(String units) {
-		this.units = units;
-	}
-	
-	
+	}	
 	
 }
