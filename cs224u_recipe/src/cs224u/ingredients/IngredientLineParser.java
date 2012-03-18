@@ -48,7 +48,7 @@ public class IngredientLineParser {
 	 */
 	public String extractIngredientString(String line){
 		Ingredient ingredient = parseLine(line);
-		return ingredient.getBase();
+		return ingredient.getBaseIngredient();
 	}
 	
 	/*
@@ -184,23 +184,23 @@ public class IngredientLineParser {
 			
 			/* if the relation is root and its a noun, that is our ingredient */
 			if (relation.equals("root")){
-				if (depPos.startsWith("N")) ingred.setBase(depStr);
+				if (depPos.startsWith("N")) ingred.setBaseIngredient(depStr);
 				continue;
 			} 
 			
-			String base = ingred.getBase();
+			String base = ingred.getBaseIngredient();
 			String govPos = govNode.parent().nodeString(); // governor POS
 			
 			/* identifies different forms of modifiers and also helps identify base ingredients if we missed it somehow */
 			if (relation.equals("nn") || relation.equals("appos") || (relation.equals("amod") && !ingred.getQuant().toString().contains(depStr))){
 				//System.out.println(relation + " dep: " + depNode.nodeString() +  depPos +" gov: " + govNode.nodeString() + govPos);
-				if (base.equals(Ingredient.NULL) && govPos.startsWith("N")) ingred.setBase(govStr);
-				base = ingred.getBase();
+				if (base.equals(Ingredient.NULL) && govPos.startsWith("N")) ingred.setBaseIngredient(govStr);
+				base = ingred.getBaseIngredient();
 				if (govStr.equals(base)) ingred.addToProps(depStr);
 			} else if (relation.equals("nsubj")) {
 				ingred.addToProps(govNode.nodeString());
-				if (base.equals(Ingredient.NULL) && depPos.startsWith("N")) ingred.setBase(depStr);
-				base = ingred.getBase();
+				if (base.equals(Ingredient.NULL) && depPos.startsWith("N")) ingred.setBaseIngredient(depStr);
+				base = ingred.getBaseIngredient();
 				if (depStr.equals(base)) ingred.addToProps(govStr);
 			}
 		}
