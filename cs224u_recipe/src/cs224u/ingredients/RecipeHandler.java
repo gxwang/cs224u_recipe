@@ -15,6 +15,8 @@ public class RecipeHandler extends DefaultHandler{
 	
 	private CharArrayWriter contents = new CharArrayWriter();
 
+	private IngredientLineParser ilp = new IngredientLineParser();
+	
 	public void startElement( String namespaceURI, String localName, String qName, Attributes attr ) throws SAXException {
 		contents.reset();
 		// If the element is a new page, then we want to make a new recipe object and toss it in the arraylist
@@ -27,7 +29,7 @@ public class RecipeHandler extends DefaultHandler{
 		if (localName.equals("page")) {
 			curRecipe.setPlaintext(contents.toString());
 			if (curRecipe.isRecipe()) {
-				curRecipe.structure();
+				curRecipe.structure(ilp);
 				recipes.add(curRecipe);
 			}
 		}
@@ -62,8 +64,8 @@ public class RecipeHandler extends DefaultHandler{
 			xr.parse(new InputSource(new FileReader("WikibooksCookbookComplete-20120207011907.xml")));
 			ArrayList<Recipe> recipes = handler.getRecipes();
 			System.out.println("" + recipes.size() + " total recipes");
-			for (int i = 0 ; i < 100; i++) {
-				System.out.println(recipes.get(i).getIngredients());
+			for (int i = 0 ; i < 30; i++) {
+				System.out.println(recipes.get(i).getStructuredIngredients().toString());
 			}	
 //			ArrayList<String> ingreds;
 //			String ingred;

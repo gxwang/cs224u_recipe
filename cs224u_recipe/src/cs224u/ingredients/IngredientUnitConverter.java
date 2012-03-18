@@ -31,7 +31,7 @@ public class IngredientUnitConverter {
 			unitChangeMod = TEASPOON_TO_ML;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
-		else if (unit.matches("tablespoon(s)?|T(s)?|tbl(s)?|tbs(s)?|tbsp(s)?")) {
+		else if (unit.matches("[Tt]ablespoon(s)?|T(s)?|[Tt]bl(s)?|[Tt]bl(.)?|[Tt]bs(s)?|[Tt]bsp(s)?")) {
 			unitChangeMod = TABLESPOON_TO_ML;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 

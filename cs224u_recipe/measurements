@@ -1,5 +1,5 @@
 teaspoon(s)?|t(s)?|[Tt]sp(s)?
-|tablespoon(s)?|T(s)?|[Tt]bl(s)?|[Tt]bs(s)?|[Tt]bsp(s)?
+|[Tt]ablespoon(s)?|T(s)?|[Tt]bl(s)?|[Tt]bl(.)?|[Tt]bs(s)?|[Tt]bsp(s)?
 |fluid ounce(s)?|fl oz(s)?
 |gill(s)?
 |cup(s)?|c(s)?

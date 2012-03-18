@@ -99,9 +99,10 @@ public class IngredientLineParser {
 					unit = govStr;
 				} catch (NumberFormatException e) {
 					System.err.println("Number format exception on: " + depStr);
-					quant = -1.0;
+					quant = 1.0;
+					//unit = "NONE";
 //					quant = Double.parseDouble(govStr);
-//					unit = depStr;
+					unit = depStr;
 				}
 				ingredQuant.setQuantity(quant);
 				ingredQuant.setUnit(unit);
@@ -163,7 +164,7 @@ public class IngredientLineParser {
 	 * for a ingredient including the base ingredient and the related
 	 * modifiers. Runs the Stanford parser to find dependencies.
 	 */
-	public Ingredient composeIngredientObject(String line, Ingredient oldIngred){
+	private Ingredient composeIngredientObject(String line, Ingredient oldIngred){
 		Ingredient ingred = oldIngred;
 				
 		Tree parseTree = lexParser.apply(line);

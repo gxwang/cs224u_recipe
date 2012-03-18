@@ -1,15 +1,12 @@
 package cs224u.ingredients;
 
 import java.io.FileReader;
-import java.io.UnsupportedEncodingException;
-import java.text.Normalizer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
-
-import edu.stanford.nlp.io.EncodingPrintWriter.out;
 /**
  * The Recipe class is just meant to be a container for a single recipe.
  * @author benjaminholtz
@@ -25,6 +22,7 @@ public class Recipe {
 	private ArrayList<Ingredient>  structuredIngredients;
 
 	public Recipe() {
+		structuredIngredients = new ArrayList<Ingredient>();
 	}
 
 	public Recipe(ArrayList<String> ingredients, ArrayList<String> directions,
@@ -33,6 +31,8 @@ public class Recipe {
 		this.directions = directions;
 		this.plaintext = plaintext;
 		this.categories = categories;
+		structuredIngredients = new ArrayList<Ingredient>();
+		
 	}
 	
 	public ArrayList<Ingredient> getStructuredIngredients() {
@@ -118,9 +118,10 @@ public class Recipe {
 	 * This method should do any of the work involved in converting the unstructured
 	 * <code>plaintext</code> data into structured fields that we can work with more 
 	 * easily.
+	 * @param ilp 
 	 */
-	public void structure() {
-		structureIngredients();
+	public void structure(IngredientLineParser ilp) {
+		structureIngredients(ilp);
 		structureDirections();
 		structureCategories();
 	}
@@ -148,8 +149,10 @@ public class Recipe {
 	 * Find all ingredients! Current uses the following approach: find the line that is
 	 * just "== Ingredients ==" and then pull every subsequent line that starts with an asterisk
 	 * We need to also grab lines that start with a colon, and maybe check for other indicators
+	 * @param ilp 
 	 */
-	private void structureIngredients() {
+	private void structureIngredients(IngredientLineParser ilp) {
+		
 		int ingredientsIndex = Math.max(plaintext.indexOf("==Ingredients"), plaintext.indexOf("' Ingredients"));
 		ArrayList<String> ingredients = new ArrayList<String>();
 		char ch = '*';
@@ -169,7 +172,7 @@ public class Recipe {
 					ingredients.add(ingredientLine);
 				}
 			}
-			ingredients.add(processLine(ingredientLine));
+			structuredIngredients.add(processLine(ingredientLine, ilp));
 			starIndex = plaintext.indexOf(ch, starIndex + 1);
 			newlineIndex = plaintext.indexOf('\n', newlineIndex + 1);
 		}
@@ -182,28 +185,13 @@ public class Recipe {
 	
 	/**
 	 * Processes a line of recipe text from a dirty to clean form
+	 * @param ilp 
 	 */
-	private String processLine(String dirty){
-		String clean = "";
-		clean = convertSpecialCharacters(dirty);
-		return clean;
+	private Ingredient processLine(String ingredLine, IngredientLineParser ilp){
+		Ingredient ingred = ilp.parseLine(ingredLine);
+		return ingred;
 	}
 	
-	/**
-	 * Converts special characters to text form (e.g. fractions)
-	 */
-	private String convertSpecialCharacters(String dirty){
-		String clean = "";
-		try {
-			byte[] bytes = dirty.getBytes("ISO-8859-1");
-			String converted = new String(bytes, "UTF-8");
-			clean = Normalizer.normalize(converted, Normalizer.Form.NFKD);
-		} catch (UnsupportedEncodingException uee){
-			uee.printStackTrace();
-		}
-		return clean;
-	}
-
 	/**
 	 * 
 	 * @return <code>True</code> if the <code>plaintext</code> is a recipe (as opposed
