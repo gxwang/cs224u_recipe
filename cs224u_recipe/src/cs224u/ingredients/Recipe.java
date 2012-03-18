@@ -171,7 +171,7 @@ public class Recipe {
 				if (ingredientLine.charAt(0) != '(' || ingredientLine.charAt(ingredientLine.length() -1 ) != ')') { //don't bother with lines all in parens
 					ingredients.add(ingredientLine);
 					structuredIngredients.add(processLine(ingredientLine, ilp));
-					System.out.println(ingredientLine);
+					//System.out.println(ingredientLine);
 				}
 			}
 			starIndex = plaintext.indexOf(ch, starIndex + 1);
