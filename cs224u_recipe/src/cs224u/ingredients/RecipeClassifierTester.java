@@ -1,5 +1,6 @@
 package cs224u.ingredients;
 
+import java.io.*;
 import java.util.*;
 
 public class RecipeClassifierTester {
@@ -33,10 +34,29 @@ public class RecipeClassifierTester {
 	 */
 	public static void main(String[] args) {
 		RecipeClassifier classifier = new SimpleRecipeClassifier();
-		List<Recipe> allRecipes = Recipe.buildRecipes();
+		List<Recipe> allRecipes = getRecipes();
 		classifier.train(allRecipes);
 		similarityTest(allRecipes, classifier);
 		separationTest(allRecipes, classifier);	
+	}
+
+	private static List<Recipe> getRecipes() {
+		List<Recipe> recipes = null;
+		try {
+			String filename = "recipes.txt";
+			FileInputStream in = new FileInputStream(filename);
+			ObjectInputStream inStream = new ObjectInputStream(in);
+			recipes = (List<Recipe>) inStream.readObject();
+			inStream.close();
+			in.close();
+		} 
+		catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		return recipes;
 	}
 
 	private static void separationTest(List<Recipe> allRecipes, RecipeClassifier classifier) {

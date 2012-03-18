@@ -75,17 +75,6 @@ public class Recipe implements java.io.Serializable {
 			e.printStackTrace();
 			return null;
 		}
-		try {
-			String filename = "recipes.txt";
-			FileOutputStream out = new FileOutputStream(filename);
-			ObjectOutputStream outStream = new ObjectOutputStream(out);
-			outStream.writeObject(recipes);
-			outStream.close();
-			out.close();
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
-		}
 		return recipes;
 	}
 
@@ -237,26 +226,17 @@ public class Recipe implements java.io.Serializable {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println("Y u no capture ingredients?");
-		int fails = 0;
-		List<String> ingredients;
-		String ingredsWindow = "";
 		List<Recipe> recipes = Recipe.buildRecipes();
-		for (Recipe recipe : recipes) {
-			ingredients = recipe.getIngredients();
-			if (ingredients.size() == 0) {
-				try {
-					ingredsWindow = recipe.plaintext.substring(Math.max(recipe.plaintext.indexOf("Ingredients"), recipe.plaintext.indexOf("ingredients")));
-				}
-				catch (StringIndexOutOfBoundsException e) {
-					System.err.println("Problem in recipe " + recipe.title);
-				}
-				System.out.println(recipe.title + "\n");
-				System.out.println(ingredsWindow);
-				System.out.println("\n^*^*^*^*^*^*^*^*^*^*^*^*^*^*^*^*\n");
-				fails++;
-			}
+		try {
+			String filename = "recipes.txt";
+			FileOutputStream out = new FileOutputStream(filename);
+			ObjectOutputStream outStream = new ObjectOutputStream(out);
+			outStream.writeObject(recipes);
+			outStream.close();
+			out.close();
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
 		}
-		System.out.println("Failed " + fails + " times");
 	}
 }
