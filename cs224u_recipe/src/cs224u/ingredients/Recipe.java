@@ -7,6 +7,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import edu.stanford.nlp.io.EncodingPrintWriter.out;
+
 /**
  * The Recipe class is just meant to be a container for a single recipe.
  * @author benjaminholtz
@@ -138,14 +140,19 @@ public class Recipe {
 	 * We need to also grab lines that start with a colon, and maybe check for other indicators
 	 */
 	private void structureIngredients() {
-		int ingredientsIndex = plaintext.indexOf("== Ingredients");
+		int ingredientsIndex = Math.max(plaintext.indexOf("==Ingredients"), plaintext.indexOf("' Ingredients"));
 		ArrayList<String> ingredients = new ArrayList<String>();
-		int starIndex = plaintext.indexOf('*', ingredientsIndex + 1);
+		char ch = '*';
+		int starIndex = plaintext.indexOf(ch, ingredientsIndex + 1);
+		if (starIndex == -1) {
+			ch = ':';
+			starIndex = plaintext.indexOf(ch, ingredientsIndex + 1);
+		}
 		int newlineIndex = plaintext.indexOf('\n', starIndex + 1);
 		while (starIndex < newlineIndex && starIndex != -1) {
 			String ingredientLine = plaintext.substring(starIndex + 1, newlineIndex);
 			ingredients.add(ingredientLine);
-			starIndex = plaintext.indexOf('*', starIndex + 1);
+			starIndex = plaintext.indexOf(ch, starIndex + 1);
 			newlineIndex = plaintext.indexOf('\n', newlineIndex + 1);
 		}
 		this.ingredients = ingredients;
@@ -161,10 +168,12 @@ public class Recipe {
 	 * to an ingredient page or category)
 	 */
 	public boolean isRecipe() {
-		return plaintext.contains("{{recipe");
+		return plaintext.contains("{{recipe") && plaintext.contains("ngredients");
 	}
 	
 	/**
+	 * @deprecated We probably are not going to use this
+	 * and use instead the in category average similarity measure
 	 * 
 	 * @param r1 - A recipe we want to compare 
 	 * @param r2 - The recipe we want to compare to
@@ -176,4 +185,27 @@ public class Recipe {
 		return 0;
 	}
 	
+	public static void main(String[] args) {
+		System.out.println("Y u no capture ingredients?");
+		int fails = 0;
+		List<String> ingredients;
+		String ingredsWindow = "";
+		List<Recipe> recipes = Recipe.buildRecipes();
+		for (Recipe recipe : recipes) {
+			ingredients = recipe.getIngredients();
+			if (ingredients.size() == 0) {
+				try {
+					ingredsWindow = recipe.plaintext.substring(Math.max(recipe.plaintext.indexOf("Ingredients"), recipe.plaintext.indexOf("ingredients")));
+				}
+				catch (StringIndexOutOfBoundsException e) {
+					System.err.println("Problem in recipe " + recipe.title);
+				}
+				System.out.println(recipe.title + "\n");
+				System.out.println(ingredsWindow);
+				System.out.println("\n^*^*^*^*^*^*^*^*^*^*^*^*^*^*^*^*\n");
+				fails++;
+			}
+		}
+		System.out.println("Failed " + fails + " times");
+	}
 }
