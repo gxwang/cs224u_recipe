@@ -10,7 +10,6 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import edu.stanford.nlp.io.EncodingPrintWriter.out;
-
 /**
  * The Recipe class is just meant to be a container for a single recipe.
  * @author benjaminholtz
@@ -153,7 +152,7 @@ public class Recipe {
 		int newlineIndex = plaintext.indexOf('\n', starIndex + 1);
 		while (starIndex < newlineIndex && starIndex != -1) {
 			String ingredientLine = plaintext.substring(starIndex + 1, newlineIndex);
-			ingredients.add(processLine(ingredientLine));
+			
 			starIndex = plaintext.indexOf('*', starIndex + 1);
 			ingredientLine = ingredientLine.trim();
 			if (ingredientLine.length() > 3) {
@@ -161,6 +160,7 @@ public class Recipe {
 					ingredients.add(ingredientLine);
 				}
 			}
+			ingredients.add(processLine(ingredientLine));
 			starIndex = plaintext.indexOf(ch, starIndex + 1);
 			newlineIndex = plaintext.indexOf('\n', newlineIndex + 1);
 		}
