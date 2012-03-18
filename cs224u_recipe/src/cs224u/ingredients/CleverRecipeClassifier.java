@@ -31,7 +31,6 @@ public class CleverRecipeClassifier extends RecipeClassifier {
 		for (String line : is2) {
 			String ingred = ilparser.extractIngredientString(line);
 			c2.incrementCount(ingred, 1.0);
-
 		}
 		return  c1.cosineSimilarity(c2);
 	}
