@@ -33,13 +33,28 @@ public class RecipeClassifierTester {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		RecipeClassifier classifier = new SimpleRecipeClassifier();
+		RecipeClassifier classifier = new WCFRecipeClassifier();
 		List<Recipe> allRecipes = getRecipes();
-		classifier.train(allRecipes);
-		similarityTest(allRecipes, classifier);
-		separationTest(allRecipes, classifier);	
+		List<Recipe> trainingSet = getTrainingSet(allRecipes);
+		List<Recipe> testSet = getTrainingSet(allRecipes);
+		classifier.train(trainingSet);
+		similarityTest(trainingSet, classifier);
+		separationTest(trainingSet, classifier);
+		classificationTest(testSet, classifier);
 	}
 
+	private static void classificationTest(List<Recipe> testSet,
+			RecipeClassifier classifier) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private static List<Recipe> getTrainingSet(List<Recipe> allRecipes) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
 	private static List<Recipe> getRecipes() {
 		List<Recipe> recipes = null;
 		try {
