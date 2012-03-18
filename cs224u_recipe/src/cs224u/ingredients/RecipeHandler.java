@@ -62,8 +62,8 @@ public class RecipeHandler extends DefaultHandler{
 			xr.parse(new InputSource(new FileReader("WikibooksCookbookComplete-20120207011907.xml")));
 			ArrayList<Recipe> recipes = handler.getRecipes();
 			System.out.println("" + recipes.size() + " total recipes");
-			for (int i = 0 ; i < 30; i++) {
-				System.out.println(recipes.get(0).getIngredients());
+			for (int i = 0 ; i < 100; i++) {
+				System.out.println(recipes.get(i).getIngredients());
 			}	
 //			ArrayList<String> ingreds;
 //			String ingred;
