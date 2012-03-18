@@ -22,6 +22,7 @@ public class Recipe {
 	private ArrayList<String> directions;
 	private ArrayList<String> categories;
 	private String plaintext;
+	private ArrayList<Ingredient>  structuredIngredients;
 
 	public Recipe() {
 	}
@@ -34,6 +35,14 @@ public class Recipe {
 		this.categories = categories;
 	}
 	
+	public ArrayList<Ingredient> getStructuredIngredients() {
+		return structuredIngredients;
+	}
+
+	public void setStructuredIngredients(ArrayList<Ingredient> structuredIngredients) {
+		this.structuredIngredients = structuredIngredients;
+	}
+
 	/**
 	 * Returns a list of recipes that are mostly parsed
 	 */
