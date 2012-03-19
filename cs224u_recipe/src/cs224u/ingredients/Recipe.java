@@ -234,6 +234,7 @@ public class Recipe implements java.io.Serializable {
 			outStream.writeObject(recipes);
 			outStream.close();
 			out.close();
+			System.out.println("Fin.");
 		} 
 		catch (IOException e) {
 			e.printStackTrace();
