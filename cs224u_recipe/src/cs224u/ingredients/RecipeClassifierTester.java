@@ -52,9 +52,10 @@ public class RecipeClassifierTester {
 		List<Recipe> trainingSet = getTrainingSet(allRecipes);
 		List<Recipe> testSet = getTestSet(allRecipes);
 		classifier.train(trainingSet);
-		similarityTest(trainingSet, classifier);
-		separationTest(trainingSet, classifier);
-		classificationTest(testSet, trainingSet, classifier);
+//		similarityTest(trainingSet, classifier);
+//		separationTest(trainingSet, classifier);
+//		classificationTest(testSet, trainingSet, classifier);
+		strictClassificationTest(testSet, trainingSet, classifier);
 	}
 
 	private static List<Recipe> getTestSet(List<Recipe> allRecipes) {
@@ -76,6 +77,40 @@ public class RecipeClassifierTester {
 		}
 		System.out.println(categories);
 	}
+	
+
+	private static void strictClassificationTest(List<Recipe> testSet, List<Recipe> trainingSet, RecipeClassifier classifier) {
+		int[] correct = new int[classes.length];
+		int[] wrong = new int[classes.length];
+		ArrayList<List<Recipe>> classLists = new ArrayList<List<Recipe>>();
+		for (int i = 0; i < classes.length; i++) {
+			classLists.add(recipesFromCategory(classes[i], trainingSet));
+		}
+		List<Recipe> prunedTestSet = new ArrayList<Recipe>();
+		for (Recipe recipe : testSet) {
+			List<String> categories = recipe.getCategories();
+			boolean belongsInSet = false;
+			for (int i = 0; i < classes.length; i++ ) {
+				if (categories.contains(classes[i])) belongsInSet = true;
+			}
+			if (belongsInSet) prunedTestSet.add(recipe);
+		}
+		for (Recipe recipe : prunedTestSet) {
+			List<Recipe> testRecipe = new ArrayList<Recipe>();
+			testRecipe.add(recipe);
+			List<Double> seps = new ArrayList<Double>(classes.length);
+			for (int i = 0; i < classes.length; i++) {
+				List<Recipe> aClass = classLists.get(i);
+				seps.add(calculateSeparation(testRecipe, aClass, classifier));
+			}
+			int maxIndex = findMax(seps);
+			if (recipe.getCategories().contains(classes[maxIndex])) correct[maxIndex]++;
+			else wrong[maxIndex]++;
+		}
+		for (int i = 0; i < classes.length; i++) {
+			System.out.println(classes[i] + " : " + correct[i] + " / " + (correct[i] + wrong[i]) );
+		}
+	}
 
 	private static void classificationTest(List<Recipe> testSet, List<Recipe> trainingSet, RecipeClassifier classifier) {
 		int fp = 0;
@@ -95,7 +130,7 @@ public class RecipeClassifierTester {
 				seps.add(calculateSeparation(testRecipe, aClass, classifier));
 			}
 			int conf = confidence(seps);
-			if (conf > 1 && conf != 9) { // confident enough to try to classify
+			if (conf > 101 && conf != 900) { // confident enough to try to classify
 				int maxIndex = findMax(seps);
 				if (recipe.getCategories().contains(classes[maxIndex])) tp++;
 				else fp ++;
@@ -121,7 +156,7 @@ public class RecipeClassifierTester {
 		double max = -1;
 		int maxIndex = -1;
 		for (int i = 0; i < seps.size(); i++) {
-			if (seps.get(i) > max) {
+			if (seps.get(i) > max || Double.isNaN(seps.get(i))) {
 				max = seps.get(i);
 				maxIndex = i;
 			}
@@ -142,7 +177,7 @@ public class RecipeClassifierTester {
 			if (val > 0)
 				confidence += - val * Math.log(val) / Math.log(9);
 		}
-		return (int)Math.pow(9,1 - confidence);
+		return (int)(100*Math.pow(9,1 - confidence));
 	}
 
 	private static List<Recipe> getTrainingSet(List<Recipe> allRecipes) {

@@ -43,7 +43,7 @@ public class CleverRecipeClassifier extends RecipeClassifier {
 			double quantity = ingredient.getQuant().getQuantity();
 			double weight = unitWeight.getCount(ingredient.getQuant().getUnit());
 			if (weight == 0) weight++;
-			c2.incrementCount(ingred, weight * quantity);  
+			c2.incrementCount(ingred, 1.0);//weight * quantity);  
 		}
 		return c1.cosineSimilarity(c2);
 	}
