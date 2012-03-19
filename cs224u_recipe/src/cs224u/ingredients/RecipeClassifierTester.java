@@ -3,6 +3,8 @@ package cs224u.ingredients;
 import java.io.*;
 import java.util.*;
 
+import cs224n.util.Counter;
+
 public class RecipeClassifierTester {
 
 	public static String[] categories = {
@@ -29,17 +31,82 @@ public class RecipeClassifierTester {
 		"English recipes"
 	};
 	
+	public static String[] classes = {
+		"Dessert recipes",
+		"American recipes",
+		"Inexpensive recipes",
+		"Indian recipes",
+		"Bread recipes",
+		"Soup recipes",
+		"Sauce recipes",
+		"Italian recipes",
+		"Camping recipes"
+	};
+	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		RecipeClassifier classifier = new SimpleRecipeClassifier();
+		RecipeClassifier classifier = new CleverRecipeClassifier();
 		List<Recipe> allRecipes = getRecipes();
-		classifier.train(allRecipes);
-		similarityTest(allRecipes, classifier);
-		separationTest(allRecipes, classifier);	
+		List<Recipe> trainingSet = getTrainingSet(allRecipes);
+		List<Recipe> testSet = getTestSet(allRecipes);
+		classifier.train(trainingSet);
+		similarityTest(trainingSet, classifier);
+		separationTest(trainingSet, classifier);
+		classificationTest(testSet, trainingSet, classifier);
 	}
 
+	private static List<Recipe> getTestSet(List<Recipe> allRecipes) {
+		List<Recipe> testSet = new ArrayList<Recipe>();
+		for (int i = 0; i < allRecipes.size(); i++) {
+			if (!trainingFilter(i)) {
+				testSet.add(allRecipes.get(i));
+			}
+		}
+		return testSet;
+	}
+
+	private static void countCategories(List<Recipe> allRecipes) {
+		Counter<String> categories = new Counter<String>();
+		for (Recipe recipe : allRecipes) {
+			for (String category : recipe.getCategories()) {
+				categories.incrementCount(category, 1.0);
+			}
+		}
+		System.out.println(categories);
+	}
+
+	private static void classificationTest(List<Recipe> testSet, List<Recipe> trainingSet, RecipeClassifier classifier) {
+		ArrayList<List<Recipe>> classLists = new ArrayList<List<Recipe>>();
+		for (int i = 0; i < classes.length; i++) {
+			classLists.add(recipesFromCategory(classes[i], trainingSet));
+		}
+		for (Recipe recipe : testSet) {
+			List<Recipe> testRecipe = new ArrayList<Recipe>();
+			testRecipe.add(recipe);
+			for (List<Recipe> aClass : classLists) {
+				calculateSeparation(testRecipe, aClass, classifier);
+			}
+		}
+	}
+
+	private static List<Recipe> getTrainingSet(List<Recipe> allRecipes) {
+		List<Recipe> trainingSet = new ArrayList<Recipe>();
+		for (int i = 0; i < allRecipes.size(); i++) {
+			if (trainingFilter(i)) {
+				trainingSet.add(allRecipes.get(i));
+			}
+		}
+		return trainingSet;
+	}
+
+	private static boolean trainingFilter(int i) {
+		int modI = i % 10;
+		return modI == 1 || modI == 4 || modI == 7;
+	}
+
+	@SuppressWarnings("unchecked")
 	private static List<Recipe> getRecipes() {
 		List<Recipe> recipes = null;
 		try {
@@ -79,6 +146,7 @@ public class RecipeClassifierTester {
 			for (int j = 0; j < recipes2.size(); j++) {
 				double sim = classifier.assignSimilarity(recipes1.get(i), recipes2.get(j));
 				if (!Double.isNaN(sim)) {
+					if (sim > 1.0) System.err.println("Similiarity too high!" );
 					count++;
 					totalSimilarity += sim;
 				} 

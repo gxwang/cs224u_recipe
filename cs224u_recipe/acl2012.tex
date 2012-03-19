@@ -36,22 +36,32 @@
 \maketitle
 \begin{abstract}
   In this report, we present an approach to determining similarity between recipes using information extraction and collaborative filtering techniques.
-Recipe similarity can be used to gain a functional understanding of what distinguishes different types of cuisine. Leveraging recipe data from the WikiBooks Cookbook\footnote{ http://en.wikibooks.org/wiki/Cookbook}, we can identify natural recipe classes using high-level user generated tags (e.g. "Indian Cuisine"). 
+Recipe similarity can be used to gain a functional understanding of what distinguishes different types of cuisine. Leveraging recipe data from the WikiBooks Cookbook\footnote{http://en.wikibooks.org/wiki/Cookbook}, we can identify natural recipe classes using high-level user generated tags (e.g. "Indian Cuisine"). 
 This report will describe various approaches to improving upon a baseline bag-of-words model.
 \end{abstract}
+
+\section{Notes}
+This report was developed as part of the final project for Stanford University's CS 224U: Natural Language Understanding taught by Bill MacCartney and Chris Potts. The source code can be downloaded from the project's GitHub page\footnote{http://github.com/gxwang/cs224u\_recipe}.
 
 \section{Introduction}
 Food often characterizes culture, and indeed, some cultures characterize themselves by their food. Anecdotally, we can make conjectures about cuisines that share close ties, but to what extent do recipes actually differ between these classifications? Thus, this report describes a system to compare recipe similarities within classes and across classes. We use the WikiBooks Cookbook data because it is freely available and is meta-tagged by users based on recipe characteristics. Some examples of recipe-wide tags are food categories like "bread recipes" and "fried recipes," as well as, cuisines like "Indian recipes" and "Chinese recipes." Thus, the WikiBooks Cookbook dataset includes both documents and the natural classes that include these documents. Recipes are interesting from a similarity metric point-of-view, becasue there may be some functional reasons for similarity and dis-similarity. For instance, bread recipes likely need flour and yeast. On the other hand, while Indian recipes and Mexican recipes both use spices, the cuisines have different flavor profiles precisely due to the specific spices that are commonly used.
 
 The functional contribution of different ingredients to the flavor profie of a recipe highlights the signfiicance of information extraction for the recipe similarity task.  While bag-of-words alone can provide a useful baseline similarity score between recipes and class, information extraction on ingredients lists can capture more fine-grained information about the ingredient itself. Ingredients lists are generally short semi-structured phrases or fragments that include a base ingredient (e.g. onion), a unit of measurement and its quantity (e.g. 2 cups), and some properties (e.g. diced). However, simply running these lines through a parser doesn't provide a clean and consistent way of extracting these data, so there is plenty of room to improve extraction through hand-built features. Information extraction on ingredients lists can tease out functional information about the ingredients and their quantities.
 
-
 \section{Methodology}
 
-Manuscripts must be in two-column format. Exceptions to the two-column format include the title, 
-authors' names and complete addresses, which must be centered at the top of the first page, 
-and any full-width figures or tables (see the guidelines in Subsection~\ref{ssec:first}). {\bf Type single-spaced}. 
-Start all pages directly under the top margin. See the guide-lines later regarding formatting the first page. Do not number the pages.
+\subsection{Data Processing}
+Our data comes from WikiMedia as a single file of 2,403 XML-formated recipes. The file is only formatted in a way that reflects its status as a set of WikiMedia pages and not as a set of recipes. Thus, there is substantial pre-processing involved in re-formatting recipes from XML to recipe objects. Immediately, we can extract any XML flagged information like the title of the recipe and the useful recipe category tags associated with each page. However, the actual text of a Cookbook recipe is all included in a single XML flag, and thus does not have any XML formatting. Fortunately, there is some structure that is gained from typical Wiki page internal formatting. For example, ingredients lists are often notated with text headings like "==Ingredients==." We can rely on the fact that WikiMedia contributors keep WikiBooks Cookbook pages reasonably consistent and cleanly formatted. Thus, we can reliably strip away the unnecessary data and keep only the data we need. The output of the pre-processing is a set of recipe objects with ingredient lines that can be parsed to extract the ingredients from these lines.
+
+\subsection{Ingredient Extraction}
+There are three main tasks for ingredient extraction: identifying units and quantities, identifying base ingredients, and identifying ingredient properties. For each ingredient line, our goal is to extract each of those pieces of data. Ultimately, we achieve this through a set of hand-built features to extract this information, which works to a varying degree of success. 
+
+First, to identify the units of measurement, we put together a relatively exhaustive list of cooking units (e.g. cups, liters, cloves) and all common variations, expressing them as a long regular expression statement. Running an ingredient line through the Stanford English PCFG parser and examining the collapsed dependencies, we note unit and quantity pairs by identifying a unit using the regular expression described above and the "num" or "number" relations. We further attempt to normalize the units by converting fractional quantities into their decimal form and all liquid and weight units to a base measurement. For example, 1/2 cups is converted to 118.2941 mL, and 1 lb is converted to 453.5924 grams. 
+
+Next, to determine the base ingredient in an ingredient line, we perform a second run of the Stanford parser. This time, we remove the already extracted unit and quantitiy, as well as the word "of," because they often interfere with identifying the base ingredient. Then, using the "root" relation from the collapsed dependency parse, we can extract base ingredient. If the "root" relation fails to find a noun, we look for the base ingredient when iterating through the other relations. 
+
+Finally, to identify the properties of an ingredient, we use the "nn," "appos," "amod," and "nsubj" relations from the second dependency parse. For example, the line "1 cup chopped onions" returns "onions" as the base ingredient and "chopped" as the property. Our basic approach ignores some things like compound ingredients. So, “3 teaspoons baking powder” would lead to “powder” as the base ingredient and "baking" as its property.
+
 
 \subsection{Electronically-available resources}
 
