@@ -17,7 +17,7 @@
 \DeclareMathOperator*{\argmax}{arg\,max}
 \setlength\titlebox{6.5cm}    % Expanding the titlebox
 
-\title{Recipe Similarity Using Ingredient Extraction and Callaborative Filtering}
+\title{Recipe Similarity Using Ingredient Extraction and Latent Semantic Analysis}
 
 \author{Benjamin Holtz \\
   Department of Computer Science \\
@@ -35,7 +35,7 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-  In this report, we present an approach to determining similarity between recipes using information extraction and collaborative filtering techniques.
+  In this report, we present an approach to determining similarity between recipes using information extraction and latent semantic analysis techniques.
 Recipe similarity can be used to gain a functional understanding of what distinguishes different types of cuisine. Leveraging recipe data from the WikiBooks Cookbook\footnote{http://en.wikibooks.org/wiki/Cookbook}, we can identify natural recipe classes using high-level user generated tags (e.g. "Indian Cuisine"). 
 This report will describe various approaches to improving upon a baseline bag-of-words model.
 \end{abstract}
@@ -44,14 +44,18 @@ This report will describe various approaches to improving upon a baseline bag-of
 This report was developed as part of the final project for Stanford University's CS 224U: Natural Language Understanding taught by Bill MacCartney and Chris Potts. The source code can be downloaded from the project's GitHub page\footnote{http://github.com/gxwang/cs224u\_recipe}.
 
 \section{Introduction}
-Food often characterizes culture, and indeed, some cultures characterize themselves by their food. Anecdotally, we can make conjectures about cuisines that share close ties, but to what extent do recipes actually differ between these classifications? Thus, this report describes a system to compare recipe similarities within classes and across classes. We use the WikiBooks Cookbook data because it is freely available and is meta-tagged by users based on recipe characteristics. Some examples of recipe-wide tags are food categories like "bread recipes" and "fried recipes," as well as, cuisines like "Indian recipes" and "Chinese recipes." Thus, the WikiBooks Cookbook dataset includes both documents and the natural classes that include these documents. Recipes are interesting from a similarity metric point-of-view, becasue there may be some functional reasons for similarity and dis-similarity. For instance, bread recipes likely need flour and yeast. On the other hand, while Indian recipes and Mexican recipes both use spices, the cuisines have different flavor profiles precisely due to the specific spices that are commonly used.
+Food often characterizes culture, and indeed, some cultures characterize themselves by their food. Anecdotally, we can make conjectures about cuisines that share close ties, but to what extent do recipes actually differ between these classifications? This report describes a system to compare recipe similarities within classes and across classes. We use the WikiBooks Cookbook data because it is freely available and is meta-tagged by users based on recipe characteristics. Some examples of recipe-wide tags are food categories like "bread recipes" and "fried recipes," as well as, cuisines like "Indian recipes" and "Chinese recipes." Thus, the WikiBooks Cookbook dataset includes both documents and the natural classes that include these documents. 
+
+Recipes are interesting from a similarity point-of-view, becasue there may be some functional reasons for similarity and dis-similarity. For instance, bread recipes likely will call for flour and yeast becasue, in general, these are needed for any bread recipe. It makes sense that bread recipes should be similar. On the other hand, while Indian recipes and Mexican recipes both use spices, the cuisines have different flavor profiles precisely due to the specific spices that are commonly used. These differences in ingredients highlights the differences in the cuisine.
 
 The functional contribution of different ingredients to the flavor profie of a recipe highlights the signfiicance of information extraction for the recipe similarity task.  While bag-of-words alone can provide a useful baseline similarity score between recipes and class, information extraction on ingredients lists can capture more fine-grained information about the ingredient itself. Ingredients lists are generally short semi-structured phrases or fragments that include a base ingredient (e.g. onion), a unit of measurement and its quantity (e.g. 2 cups), and some properties (e.g. diced). However, simply running these lines through a parser doesn't provide a clean and consistent way of extracting these data, so there is plenty of room to improve extraction through hand-built features. Information extraction on ingredients lists can tease out functional information about the ingredients and their quantities.
 
 \section{Methodology}
 
-\subsection{Data Processing}
-Our data comes from WikiMedia as a single file of 2,403 XML-formated recipes. The file is only formatted in a way that reflects its status as a set of WikiMedia pages and not as a set of recipes. Thus, there is substantial pre-processing involved in re-formatting recipes from XML to recipe objects. Immediately, we can extract any XML flagged information like the title of the recipe and the useful recipe category tags associated with each page. However, the actual text of a Cookbook recipe is all included in a single XML flag, and thus does not have any XML formatting. Fortunately, there is some structure that is gained from typical Wiki page internal formatting. For example, ingredients lists are often notated with text headings like "==Ingredients==." We can rely on the fact that WikiMedia contributors keep WikiBooks Cookbook pages reasonably consistent and cleanly formatted. Thus, we can reliably strip away the unnecessary data and keep only the data we need. The output of the pre-processing is a set of recipe objects with ingredient lines that can be parsed to extract the ingredients from these lines.
+\subsection{Data Pre-Processing}
+Our data comes from WikiMedia as a single file of 2,403 XML-formated recipes. The file is only formatted in a way that reflects its status as a set of WikiMedia pages and not as a set of recipes. Thus, there is substantial pre-processing involved in re-formatting recipes from XML to recipe objects. Immediately, we can extract any XML flagged information like the title of the recipe and the useful recipe category tags associated with each page. 
+
+However, the actual text of a Cookbook recipe is all included in a single XML flag, and thus does not have any XML formatting. Fortunately, there is some structure that is gained from typical Wiki page internal formatting. For example, ingredients lists are often notated with text headings like "==Ingredients==." We can rely on the fact that WikiMedia contributors keep WikiBooks Cookbook pages reasonably consistent and cleanly formatted. Thus, we can reliably strip away the unnecessary data and keep only the data we need. The output of the pre-processing is a set of recipe objects with ingredient lines that can be parsed to extract the ingredients from these lines.
 
 \subsection{Ingredient Extraction}
 There are three main tasks for ingredient extraction: identifying units and quantities, identifying base ingredients, and identifying ingredient properties. For each ingredient line, our goal is to extract each of those pieces of data. Ultimately, we achieve this through a set of hand-built features to extract this information, which works to a varying degree of success. 
@@ -62,6 +66,50 @@ Next, to determine the base ingredient in an ingredient line, we perform a secon
 
 Finally, to identify the properties of an ingredient, we use the "nn," "appos," "amod," and "nsubj" relations from the second dependency parse. For example, the line "1 cup chopped onions" returns "onions" as the base ingredient and "chopped" as the property. Our basic approach ignores some things like compound ingredients. So, “3 teaspoons baking powder” would lead to “powder” as the base ingredient and "baking" as its property.
 
+\subsection{Cosine Similarity Classifiers}
+We use cosine similarity in two classifiers: a baseline simple classifier and a more clever classifier that uses ingredient extraction. The simple classifier simple relies on a bag-of-words model, while the clever classifier leverages more specific ingredient information. 
+
+The simple classifier begins by identifying a recipe's ingredient list and taking a bag-of-words over all the text in the list. This does not make a distinction between units, base ingredient, properties, or extraneous words and comments. Each recipe is thus reduced to a term frequency vector. The classifier then uses cosine similarity within a recipe category to find the average similarity between each of the recipesi n a cateogry. The same is reported across categories, comparing recipes from one category to recipes from another. 
+
+\subsection{Latent Semantic Analysis Classifier}
+
+Finally, we implement Latent Semantic Analysis for recipe similarity. LSA is a dimensionality-reduction technique for analyzing the relationships between documents and the terms in documents that relies on the assumption that words similar in meaning occur close together in text. A word count matrix is produced from text and Singular Value Decomposition (SVD) is used to combine some of the columns of the matrix, reducing the dimensions while preserving the similarity among the rows. LSA is particularly useful because it allows us to compare similarity between documents and small groups of terms in a low dimensional space. 
+
+Applied to our task,we first generate a term-recipe occurance matrix. LSA then finds the low-rank approximation to said occurance matrix. This low-rank approximation is particularly important because we presume the occurance matrix is fairly noisy, and LSA can reduce the noise in our matrix. 
+
+\section{Results and Discussion}
+
+\subsection{Ingredient Extraction}
+
+We use ingredient extraction as a way to improve upon a bag-of-words similarity model. The task of hand-built features for ingredient extractio is also an interesting problem in itself. Thus, we'd like to achieve goot performance with our extraction system. To test ingredient extraction, we evaluate by testing on 50 randomly drawn records across all ingredient list lines. 
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|l|cc|c|c|}
+\hline\bf Data Type & \bf Precision & \bf Recall &  \bf F1 & \bf Accuracy\\ \hline
+Ingredient & 0.73 & 0.90 & 0.80 &0.67 \\
+Quantity & 0.88 & 1 & 0.94 & 0.88 \\
+Unit & 0.97 & 0.85 & 0.91 & 0.88 \\
+Properties & 0.57 & 0.71 & 0.63 & 0.62 \\
+\hline
+\end{tabular}
+\end{center}
+\caption{\label{font-table}Evaluation on 50 Random Ingredient Lines. }
+\end{table}
+
+As expected, our best results come from extracting quantities and units. Specifically, quantity recall is 1 because our system never guesses that the quantity of an ingredient should be missing. So, any errors should come as incorrectly guessed or unexpected quantities. However, quantity precision is also quite high. In general, the task of determining the quantity is relatively easy because of the "num" and "number" relations. 
+
+Extraction on units is also quite good. The system has high precision because units are identified using a regular expression. Thus, most errors come from units that were missed by the regular expression and not mis-identified units. The latter example only occured once in the 50 testing examples. Our strategy to capture units seems reasonable, as recall on units is still decent. However, there is clearly room for improvement over the hand-built regular expression we've used for this task. 
+
+Base ingredient and ingredient property extraction is significantly more poor. Ingredient recall is high because to extract a base ingredeint, our system only requires that a line's root must be a noun or one of the ingredient property relations must include a noun. Thus, our strategy to capture base ingredients is fairly broad. This also explains why base ingredient precision is quite a bit lower. As a result, ingredient F1 is decent, though accuracy is quite low.
+
+Ingredient property extraction performs the worst of all extraction tasks. Like with base ingredients, recall is decent due to a broad strategy to capture relations. Any word that modifies or is joined with a base ingredient is identified as an ingredient property. However, the strategy is also somewhat naive and can easily miss properties if the ingredient lines are complex or if the base ingredient is mis-identified. Finally, precision on properties suffers the most. The errors here almost always result from a mis-identified base ingredient or a compound ingredient. If the ingredient is mis-identified, the system will often incorrectly identify properties related to the mis-identified ingredient. These errors generally result from complex ingredient list lines. We expect a compound ingredient to result in errors. A term like "hard boiled egg" will parse into "hard" and "boiled" as properties of egg. Clearly, the correct designation would be "hard boiled egg" as the base ingredient and not just "egg." The low precision results in reasonably poor F1 and accuracy. 
+
+Extraction of ingredient information can be improved in several key ways. First, the hand-built features, while reasonably powerful for the WikiBooks Cookbook data, may nto be as robust to outside recipe data. Future work could use automated extraction methods to perform this task. Specifically, with labelled data, Conditional Random Fields is a tried and tested information extraction method that we'd like to try for this task. Additionally, because there are certain patterns in the ingredients list text, any bootstrapped information extraction system could provide good results. These automated methods could be used in conjunction with hand-built features for quantity and unit, which both performed well. Another improvement would be looking at Semantic Role Labelling (SRL). In this project, we used the dependency parse to find ingredients, properties, units, and quantities. However, the dependency parse is not overly reliable for the fragmented form of ingredients list text. Instead, SRL could be useful in determining relation patterns and words that could have been useful for some ofthe trickier eamples in extracting ingredients and properties. Finally, gathering data on compound ingredients could greatly improve base ingredient extraction. For example, we could generate a list of  bi-grams and tri-grams that are strongly associated around base ingredients. For example, if we wanted to capture "baking soda" but not "chopped onions" as a compound ingredient, we can note that "soda" may really only appear as "baking soda," while "onions" will appear as "chopped onions," "sliced onions," "peeled onions," and others.
+
+\subsection{Recipe Similarity}
+
+We expect that similarity should be high within each of the recipe categories, especially on very specific recipes (e.g. "bread recipes"). Less defined recipe categories like "camping recipes" will likely have a lower average similarity. We also expect that cross-category similarities should be lower than intra-category similarities. We'd suspect that there are some categories of recipes that are closer in nature than others. For example, "bread recipes" may be closer to "flatbread recipes" than "beverage recipes."
 
 \subsection{Electronically-available resources}
 
