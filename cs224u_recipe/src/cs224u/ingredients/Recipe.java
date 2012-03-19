@@ -183,7 +183,7 @@ public class Recipe implements java.io.Serializable {
 					//System.out.println(ingredientLine);
 				}
 			}
-			starIndex = plaintext.indexOf(ch, starIndex + 1);
+			//starIndex = plaintext.indexOf(ch, starIndex + 1);
 			newlineIndex = plaintext.indexOf('\n', newlineIndex + 1);
 		}
 		this.ingredients = ingredients;
