@@ -17,8 +17,8 @@ public class IngredientUnitConverter {
 	private static final String LIQUID_NORM_MEASURE = "ml";
 	private static final String WEIGHT_NORM_MEASURE = "g";
 
-	private static final double LIQUID_MODIFIER = CUP_TO_ML;
-	private static final double WEIGHT_MODIFIER = OZ_TO_GRAM;
+	private static final double LIQUID_MODIFIER = 1;
+	private static final double WEIGHT_MODIFIER = 1;
 	
 	public static IngredientQuantity convert(IngredientQuantity iq) {
 		IngredientQuantity converted = new IngredientQuantity();
