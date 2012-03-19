@@ -17,6 +17,9 @@ public class IngredientUnitConverter {
 	private static final String LIQUID_NORM_MEASURE = "ml";
 	private static final String WEIGHT_NORM_MEASURE = "g";
 
+	private static final double LIQUID_MODIFIER = 1;
+	private static final double WEIGHT_MODIFIER = 1;
+	
 	public static IngredientQuantity convert(IngredientQuantity iq) {
 		IngredientQuantity converted = new IngredientQuantity();
 		
@@ -26,57 +29,67 @@ public class IngredientUnitConverter {
 		double unitChangeMod = 1;
 		String normUnit = unit;
 
+		/* unknown */
+		if (unit.matches("NONE")){
+			if (quantity==-1.0) {
+				quantity = 1.0;
+			}
+		}
+		
 		/* liquid */
-		if (unit.matches("teaspoon(s)?|t(s)?|tsp(s)?")) {
-			unitChangeMod = TEASPOON_TO_ML;
+		
+		else if (unit.matches("teaspoon(s)?|t(s)?|tsp(s)?")) {
+			unitChangeMod = TEASPOON_TO_ML / LIQUID_MODIFIER;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
 		else if (unit.matches("[Tt]ablespoon(s)?|T(s)?|[Tt]bl(s)?|[Tt]bl(.)?|[Tt]bs(s)?|[Tt]bsp(s)?")) {
-			unitChangeMod = TABLESPOON_TO_ML;
+			unitChangeMod = TABLESPOON_TO_ML / LIQUID_MODIFIER;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
 		else if (unit.matches("cup(s)?|c(s)?")) {
-			unitChangeMod = CUP_TO_ML;	
+			unitChangeMod = CUP_TO_ML / LIQUID_MODIFIER;	
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
 		else if (unit.matches("pint(s)?|p(s)?|pt(s)?|fl pt(s)?")) {
-			unitChangeMod = PINT_TO_ML;
+			unitChangeMod = PINT_TO_ML / LIQUID_MODIFIER;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
 		else if (unit.matches("quart(s)?|q(s)?|qt(s)?|fl qt(s)?")) {
-			unitChangeMod = QUART_TO_ML;
+			unitChangeMod = QUART_TO_ML / LIQUID_MODIFIER;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
 		else if (unit.matches("gallon(s)?|gal(s)?")) {
-			unitChangeMod = GAL_TO_ML;
+			unitChangeMod = GAL_TO_ML / LIQUID_MODIFIER;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
 		else if (unit.matches("ml(s)?|milliliter(s)?|millilitre(s)?|cc(s)?|mL(s)?")) {
+			unitChangeMod = 1 / LIQUID_MODIFIER;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
 		else if (unit.matches("l(s)?|liter(s)?|litre(s)?|L(s)?")) {
-			unitChangeMod = L_TO_ML;
+			unitChangeMod = L_TO_ML / LIQUID_MODIFIER;
 			normUnit =  LIQUID_NORM_MEASURE;
 		} 
 
 		/* pounds and grams */
 		else if (unit.matches("pound(s)?|lb(s)?|#(s)?")) {
-			unitChangeMod = LBS_TO_GRAM;
+			unitChangeMod = LBS_TO_GRAM / WEIGHT_MODIFIER;
 			normUnit =  WEIGHT_NORM_MEASURE;
 		}
 		else if (unit.matches("ounce(s)?|oz(s)?")) {
-			unitChangeMod = OZ_TO_GRAM;
+			unitChangeMod = OZ_TO_GRAM/ WEIGHT_MODIFIER;
 			normUnit =  WEIGHT_NORM_MEASURE;
 		}
 		else if (unit.matches("mg(s)?|milligram(s)?|milligramme(s)?")) {
-			unitChangeMod = MG_TO_GRAM;
+			unitChangeMod = MG_TO_GRAM/ WEIGHT_MODIFIER;
 			normUnit =  WEIGHT_NORM_MEASURE;
 		}
 		else if (unit.matches("g(s)?|gram(s)?|gramme(s)?")) {
+			unitChangeMod = 1 / WEIGHT_MODIFIER;
 			normUnit =  WEIGHT_NORM_MEASURE;
 		}
 		else if (unit.matches("kg(s)?|kilogram(s)?|kilogramme(s)?")) {
-			unitChangeMod = KG_TO_GRAM;
+			unitChangeMod = KG_TO_GRAM/ WEIGHT_MODIFIER;
 			normUnit =  WEIGHT_NORM_MEASURE;
 		}
 		
