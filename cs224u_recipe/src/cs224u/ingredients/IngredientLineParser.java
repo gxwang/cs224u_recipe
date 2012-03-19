@@ -30,7 +30,7 @@ import edu.stanford.nlp.trees.TypedDependency;
 public class IngredientLineParser {
 
 	private static String MEASUREMENTS_FILE = "measurements";
-	private static String TEST_FILE = "ingred_test";
+	private static String TEST_FILE = "sampleIngreds.txt";
 	private String measurementRegex = "";
 	private static ArrayList<String> testLines = new ArrayList<String>();
 	private LexicalizedParser lexParser;
