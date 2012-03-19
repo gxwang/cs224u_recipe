@@ -18,11 +18,11 @@ teaspoon(s)?|t(s)?|[Tt]sp(s)?
 |mm(s)?|milimeter(s)?|millimetre(s)?
 |cm(s)?|centimeter(s)?|centimetre(s)?
 |m(s)?|meter(s)?|metre(s)?
+|pinch(e)?(s)?
 |inch(s)?|in(s)?|\"(s)?
 |clove(s)?
 |box(s)?
 |bag(s)?
 |package(s)?|pack(s)?|packet(s)?
 |can(s)?
-|pinch(e)?(s)?
 |bunch(s)?

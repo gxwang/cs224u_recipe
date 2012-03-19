@@ -7,10 +7,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.stanford.nlp.trees.GrammaticalStructure;
@@ -50,7 +51,7 @@ public class IngredientLineParser {
 		Ingredient ingredient = parseLine(line);
 		return ingredient.getBaseIngredient();
 	}
-	
+
 	/*
 	 * Parses an ingredient line by first running it through the Stanford dependency parser to determine
 	 * which quantities fit with which units. Then it joins the quantity with the associated units and
@@ -68,7 +69,8 @@ public class IngredientLineParser {
 		line = line.replaceAll("[\\p{Digit}]g ", "0 g ");
 		line = line.replaceAll("lb ", " lb ");
 		line = line.replaceAll("&nbsp;", " ");
-		
+		line = line.replaceAll(":", "");
+
 		/* Retrieves list of dependencies */
 		Tree parseTree = lexParser.apply(line);
 		GrammaticalStructure gs = gsf.newGrammaticalStructure(parseTree);
@@ -77,18 +79,11 @@ public class IngredientLineParser {
 		HashSet<Integer> indicesToSkip = new HashSet<Integer>(); // Skip these indicies when recreating sentence
 
 		IngredientQuantity ingredQuant = new IngredientQuantity();
-		double quant;
-		String unit = null;
-		
-//		if (!line.matches(measurementRegex)) {
-//			if (!line.matches("[0-9]")) {
-//				quant = 1.0;
-//				unit = "NONE";
-//				ingredQuant.setQuantity(quant);
-//				ingredQuant.setUnit(unit);
-//			}
-//		}
-		
+		double quant = -1.0;
+		String unit = "NONE";
+
+
+
 		/* loop through the depedencies to pick out qty and units*/
 		for (TypedDependency dep : deps) {
 			String relation = dep.reln().toString();
@@ -102,31 +97,65 @@ public class IngredientLineParser {
 				indicesToSkip.add(dependent.index());
 				indicesToSkip.add(governor.index());
 				//depStr = depStr.replaceAll("\\?", "\\/");
-				
+
 				try {
 					if (depStr.contains("/") || depStr.contains("\\/")){
 						quant = formatFraction(depStr);
 					} else {
 						quant = Double.parseDouble(depStr);
 					}
-					unit = govStr;
+
 				} catch (NumberFormatException e) {
-					System.err.println("Number format exception on: " + depStr);
-					quant = 1.0;
-					//unit = "NONE";
-//					quant = Double.parseDouble(govStr);
-					unit = depStr;
+
+					if (!depStr.matches("[0-9]")) {
+						if (depStr.matches("[Oo]ne")){
+							quant = 1.0;
+						} else if (depStr.matches("[Tt]wo")){
+							quant = 2.0;
+						} else if (depStr.matches("[Tt]hree")){
+							quant = 3.0;
+						} 
+					} else {
+						if (depStr.matches("0,75")){
+							quant = 0.75;
+						} else if (depStr.matches("0,5")){
+							quant = 0.5;
+						} else if (depStr.matches("2,5")){
+							quant = 2.5;
+						} else if (depStr.matches("\\-")) {
+							Pattern p = Pattern.compile("[0-9]+\\-[0-9]+");
+							Matcher m = p.matcher(depStr);
+							if ( m.find()){
+								String range = m.group();
+								String[] split = range.split("-");
+								quant = (Double.parseDouble(split[0])+ Double.parseDouble(split[1])) / 2.0;
+							} 
+						} else {
+							System.err.println("Number format exception on: " + depStr);
+							quant = 1.0;
+						}
+					} 
 				}
-				ingredQuant.setQuantity(quant);
-				ingredQuant.setUnit(unit);
+				unit = govStr;
 			}		
 		}
 
+		if (quant == -1.0){
+			Pattern p = Pattern.compile("[0-9]+ ");
+			Matcher m = p.matcher(line);
+			if ( m.find()){
+				quant = Double.parseDouble(m.group());
+			}
+
+		}
+
+		ingredQuant.setQuantity(quant);
+		ingredQuant.setUnit(unit);
 		//System.out.println();
 		//tp.printTree(parseTree); // prints dependencies
 
 		String processedLine = "";
-		
+
 		/* reconstitute string */
 		PennTreebankTokenizer tokenizer = new PennTreebankTokenizer(new StringReader(line));
 		int index = 1;
@@ -183,33 +212,33 @@ public class IngredientLineParser {
 	 */
 	private Ingredient composeIngredientObject(String line, Ingredient oldIngred){
 		Ingredient ingred = oldIngred;
-				
+
 		Tree parseTree = lexParser.apply(line);
-		
+
 		/* Boilerplate for getting typed dependencies */
 		GrammaticalStructure gs = gsf.newGrammaticalStructure(parseTree);
 		//System.out.println(gs.typedDependenciesCollapsed()); // prints out all the dependencies
 		ArrayList<TypedDependency> deps = (ArrayList<TypedDependency>) gs.typedDependenciesCollapsed();
-		
+
 		/* run the Stanford parser again to find the base ingredient*/
 		for (TypedDependency dep : deps) {
 			TreeGraphNode depNode = dep.dep();
 			TreeGraphNode govNode = dep.gov();
 			String depPos = depNode.parent().nodeString(); // dependant POS
-			
+
 			String relation = dep.reln().toString();
 			String depStr = depNode.nodeString();
 			String govStr = govNode.nodeString();
-			
+
 			/* if the relation is root and its a noun, that is our ingredient */
 			if (relation.equals("root")){
 				if (depPos.startsWith("N")) ingred.setBaseIngredient(depStr);
 				continue;
 			} 
-			
+
 			String base = ingred.getBaseIngredient();
 			String govPos = govNode.parent().nodeString(); // governor POS
-			
+
 			/* identifies different forms of modifiers and also helps identify base ingredients if we missed it somehow */
 			if (relation.equals("nn") || relation.equals("appos") || (relation.equals("amod") && !ingred.getQuant().toString().contains(depStr))){
 				//System.out.println(relation + " dep: " + depNode.nodeString() +  depPos +" gov: " + govNode.nodeString() + govPos);
@@ -223,10 +252,10 @@ public class IngredientLineParser {
 				if (depStr.equals(base)) ingred.addToProps(govStr);
 			}
 		}
-		
+
 		return ingred;
 	}
-	
+
 	/*
 	 * Loads measurement file of regex to identify units.
 	 */
@@ -257,11 +286,11 @@ public class IngredientLineParser {
 		//			System.out.println(test[i] + " -> " + lnParse.parseLine(test[i]));
 		//		}
 		loadTest();
-		
+
 		BufferedWriter bw = null;
 		try {
 			bw = new BufferedWriter(new FileWriter("ingredEval.txt"));
-			
+
 			for (String ln : testLines) {
 
 				//bw.write(ln + " -> " + cleanLn); bw.newLine();
@@ -282,7 +311,7 @@ public class IngredientLineParser {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 		}
 
 	}
@@ -302,7 +331,7 @@ public class IngredientLineParser {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private static String stripWikiLinks(String line) {
 		line = line.replaceAll("\\*", "");
 		int sBracesIndex = line.indexOf("[[");
@@ -312,8 +341,8 @@ public class IngredientLineParser {
 		int pipeIndex = line.indexOf('|', sBracesIndex);
 		int endBracesIndex = line.indexOf("]]", pipeIndex);
 		return line.substring(0, sBracesIndex) 
-				+ line.substring(pipeIndex + 1, endBracesIndex) 
-				+ stripWikiLinks(line.substring(endBracesIndex+2));
+		+ line.substring(pipeIndex + 1, endBracesIndex) 
+		+ stripWikiLinks(line.substring(endBracesIndex+2));
 	}
 
 }
