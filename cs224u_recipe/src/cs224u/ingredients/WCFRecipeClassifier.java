@@ -6,20 +6,18 @@ import Jama.*;
 
 public class WCFRecipeClassifier extends RecipeClassifier {
 	SingularValueDecomposition svd;
-	int dimensionsToKeep;
+	int dimensionsToKeep = 100;
 
 	@Override
 	public void train(List<Recipe> recipes) {
 		HashMap<String, Integer> ingredients = buildIngredientSet(recipes);
 		Matrix incidenceMatrix = buildIncidenceMatrix(recipes, ingredients);
-		svd = new SingularValueDecomposition(incidenceMatrix);
+		svd = new SingularValueDecomposition(incidenceMatrix.transpose());
 		Matrix s = svd.getS();
 		double totalPower = 0.0;
 		for(int i = 0; i < s.getColumnDimension(); i++) {
 			totalPower += s.get(i, i);
-			if (i == s.getColumnDimension() / 100) {
-				System.out.println("Total power after " + i + " singular values: "+ totalPower );
-			}
+			System.out.println( totalPower );
 		}
 
 	}
@@ -31,7 +29,7 @@ public class WCFRecipeClassifier extends RecipeClassifier {
 			for (Ingredient ingred : recipe.getStructuredIngredients()) {
 				String bI = ingred.getBaseIngredient();
 				int i = ingredients.get(bI);
-				incidenceMatrix.set(i, j, 1.0);
+				incidenceMatrix.set(i, j, ingred.getQuant().getQuantity());
 			}
 		}
 		System.out.println("Recipe - Ingredient incidence matrix made");
@@ -44,7 +42,7 @@ public class WCFRecipeClassifier extends RecipeClassifier {
 		for (Recipe recipe : recipes) {
 			for (Ingredient ingredient : recipe.getStructuredIngredients()) {
 				String bI = ingredient.getBaseIngredient();
-				if (ingredients.containsKey(bI)) {
+				if (!ingredients.containsKey(bI)) {
 					ingredients.put(bI, index);
 					index++;
 				}
