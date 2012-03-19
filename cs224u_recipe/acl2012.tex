@@ -14,6 +14,7 @@
 \usepackage{amsmath}
 \usepackage{multirow}
 \usepackage{url}
+\usepackage{listings}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \setlength\titlebox{6.5cm}    % Expanding the titlebox
 
@@ -51,6 +52,15 @@ Recipes are interesting from a similarity point-of-view, becasue there may be so
 The functional contribution of different ingredients to the flavor profie of a recipe highlights the signfiicance of information extraction for the recipe similarity task.  While bag-of-words alone can provide a useful baseline similarity score between recipes and class, information extraction on ingredients lists can capture more fine-grained information about the ingredient itself. Ingredients lists are generally short semi-structured phrases or fragments that include a base ingredient (e.g. onion), a unit of measurement and its quantity (e.g. 2 cups), and some properties (e.g. diced). However, simply running these lines through a parser doesn't provide a clean and consistent way of extracting these data, so there is plenty of room to improve extraction through hand-built features. Information extraction on ingredients lists can tease out functional information about the ingredients and their quantities.
 
 \section{Methodology}
+
+\begin{figure*}
+\centering
+\lstset{basicstyle=\footnotesize, breaklines=true}
+\lstinputlisting[language=XML]{example.xml}
+\caption[XML Representation Example]{XML Representation Example}
+% \vskip
+\label{fig:xml}
+\end{figure*}
 
 \subsection{Data Pre-Processing}
 Our data comes from WikiMedia as a single file of 2,403 XML-formated recipes. The file is only formatted in a way that reflects its status as a set of WikiMedia pages and not as a set of recipes. Thus, there is substantial pre-processing involved in re-formatting recipes from XML to recipe objects. Immediately, we can extract any XML flagged information like the title of the recipe and the useful recipe category tags associated with each page. 

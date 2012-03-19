@@ -228,7 +228,7 @@ public class Recipe implements java.io.Serializable {
 	public static void main(String[] args) {
 		List<Recipe> recipes = Recipe.buildRecipes();
 		try {
-			String filename = "recipes.txt";
+			String filename = "recipes2.txt";
 			FileOutputStream out = new FileOutputStream(filename);
 			ObjectOutputStream outStream = new ObjectOutputStream(out);
 			outStream.writeObject(recipes);
