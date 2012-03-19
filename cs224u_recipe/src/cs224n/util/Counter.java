@@ -38,7 +38,11 @@ public class Counter <E> implements Serializable {
 	  for (E key : this.keySet()) {
 		  norm += Math.pow(this.getCount(key),2.0);
 	  }
-	  return  dotProd / Math.sqrt(norm * normc);
+	  double sim =  dotProd / Math.sqrt(norm * normc);
+	  if (sim > 1) {
+		  System.err.println("Sim too high!!!");
+	  }
+	  return sim;
   }
   
   /**
@@ -211,6 +215,16 @@ public class Counter <E> implements Serializable {
     System.out.println(counter);
     System.out.println(counter.toString(2));
     System.out.println("Total: " + counter.totalCount());
+    
+    Counter<String> x = new Counter<String>();
+    x.incrementCount("a", 2.0);
+    x.incrementCount("b", 1.0);
+    Counter<String> y = new Counter<String>();
+    y.incrementCount("a", 1.0);
+    y.incrementCount("c", 1.0);
+    y.incrementCount("b", 1.0);
+    System.out.println("xy Similarity is " + x.cosineSimilarity(y));
+    System.out.println("xx Similarity is " + x.cosineSimilarity(x));
   }
 
 }
