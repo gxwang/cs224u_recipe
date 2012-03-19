@@ -14,7 +14,10 @@ import java.util.Collection;
  * @author Dan Klein
  */
 public class Counter <E> implements Serializable {
-  Map<E, Double> entries;
+
+	
+	private static final long serialVersionUID = 7131827076774280910L;
+	Map<E, Double> entries;
 
   /**
    * Let's non-destructively calculate the cosine similarity of the two counters 
