@@ -78,6 +78,10 @@ public class RecipeClassifierTester {
 	}
 
 	private static void classificationTest(List<Recipe> testSet, List<Recipe> trainingSet, RecipeClassifier classifier) {
+		int fp = 0;
+		int tp = 0;
+		int fn = 0;
+		int tn = 0;
 		ArrayList<List<Recipe>> classLists = new ArrayList<List<Recipe>>();
 		for (int i = 0; i < classes.length; i++) {
 			classLists.add(recipesFromCategory(classes[i], trainingSet));
@@ -85,10 +89,60 @@ public class RecipeClassifierTester {
 		for (Recipe recipe : testSet) {
 			List<Recipe> testRecipe = new ArrayList<Recipe>();
 			testRecipe.add(recipe);
-			for (List<Recipe> aClass : classLists) {
-				calculateSeparation(testRecipe, aClass, classifier);
+			List<Double> seps = new ArrayList<Double>(classes.length);
+			for (int i = 0; i < classes.length; i++) {
+				List<Recipe> aClass = classLists.get(i);
+				seps.add(calculateSeparation(testRecipe, aClass, classifier));
+			}
+			int conf = confidence(seps);
+			if (conf > 1 && conf != 9) { // confident enough to try to classify
+				int maxIndex = findMax(seps);
+				if (recipe.getCategories().contains(classes[maxIndex])) tp++;
+				else fp ++;
+			}
+			else {
+				boolean isCorrect = true;
+				for (int j = 0; j < classes.length; j++) {
+					if (recipe.getCategories().contains(classes[j])) {
+						isCorrect = false;
+					}
+				}
+				if (isCorrect) tn++;
+				else fn++;
 			}
 		}
+		System.out.println("fp :" + fp);
+		System.out.println("tp :" + tp);
+		System.out.println("fn :" + fn);
+		System.out.println("tn :" + tn);
+	}
+	
+	private static int findMax(List<Double> seps) {
+		double max = -1;
+		int maxIndex = -1;
+		for (int i = 0; i < seps.size(); i++) {
+			if (seps.get(i) > max) {
+				max = seps.get(i);
+				maxIndex = i;
+			}
+		}
+		return maxIndex;
+	}
+
+	private static int confidence(List<Double> values) {
+		double sum = 0;
+		for (double val : values) {
+			sum += val;
+		}
+		for (int i = 0; i < values.size(); i++) {
+			values.set(i, values.get(i)/sum);
+		}
+		double confidence = 0;
+		for (double val : values) {
+			if (val > 0)
+				confidence += - val * Math.log(val) / Math.log(9);
+		}
+		return (int)Math.pow(9,1 - confidence);
 	}
 
 	private static List<Recipe> getTrainingSet(List<Recipe> allRecipes) {

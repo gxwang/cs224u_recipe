@@ -12,7 +12,7 @@ public class WCFRecipeClassifier extends RecipeClassifier {
 	public void train(List<Recipe> recipes) {
 		HashMap<String, Integer> ingredients = buildIngredientSet(recipes);
 		Matrix incidenceMatrix = buildIncidenceMatrix(recipes, ingredients);
-		svd = new SingularValueDecomposition(incidenceMatrix.transpose());
+		svd = new SingularValueDecomposition(incidenceMatrix);
 		Matrix s = svd.getS();
 		double totalPower = 0.0;
 		for(int i = 0; i < s.getColumnDimension(); i++) {
@@ -29,7 +29,7 @@ public class WCFRecipeClassifier extends RecipeClassifier {
 			for (Ingredient ingred : recipe.getStructuredIngredients()) {
 				String bI = ingred.getBaseIngredient();
 				int i = ingredients.get(bI);
-				incidenceMatrix.set(i, j, ingred.getQuant().getQuantity());
+				incidenceMatrix.set(i, j, 1);//ingred.getQuant().getQuantity());
 			}
 		}
 		System.out.println("Recipe - Ingredient incidence matrix made");
